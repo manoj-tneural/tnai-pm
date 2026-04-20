@@ -16,18 +16,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { email, password, name, role } = body;
+    const { email, password, full_name, role } = body;
 
     // Trim whitespace
     const trimmedEmail = email?.trim();
     const trimmedPassword = password?.trim();
-    const trimmedName = name?.trim();
+    const trimmedFullName = full_name?.trim();
 
-    console.log('Signup attempt:', { email: trimmedEmail, name: trimmedName, hasPassword: !!trimmedPassword });
+    console.log('Signup attempt:', { email: trimmedEmail, full_name: trimmedFullName, hasPassword: !!trimmedPassword });
 
-    if (!trimmedEmail || !trimmedPassword || !trimmedName) {
+    if (!trimmedEmail || !trimmedPassword || !trimmedFullName) {
       return NextResponse.json(
-        { error: `Missing required fields: email=${!!trimmedEmail}, password=${!!trimmedPassword}, name=${!!trimmedName}` },
+        { error: `Missing required fields: email=${!!trimmedEmail}, password=${!!trimmedPassword}, full_name=${!!trimmedFullName}` },
         { status: 400 }
       );
     }
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
       `INSERT INTO profiles (email, password_hash, full_name, role) 
        VALUES ($1, $2, $3, $4) 
        RETURNING id, email, full_name, role`,
-      [trimmedEmail.toLowerCase(), passwordHash, trimmedName, userRole]
+      [trimmedEmail.toLowerCase(), passwordHash, trimmedFullName, userRole]
     );
 
     if (!result.rows[0]) {
