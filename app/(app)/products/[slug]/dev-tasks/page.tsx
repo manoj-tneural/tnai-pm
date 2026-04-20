@@ -1,7 +1,6 @@
 import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
-import { verifyToken } from '@/lib/auth-jwt';
 import { query } from '@/lib/db';
 import clsx from 'clsx';
 
@@ -16,9 +15,6 @@ export default async function DevTasksPage({ params }: { params: { slug: string 
   const cookieStore = await cookies();
   const token = cookieStore.get('auth_token')?.value;
   if (!token) redirect('/auth/login');
-
-  const decoded = verifyToken(token);
-  if (!decoded) redirect('/auth/login');
 
   try {
     const productResult = await query('SELECT * FROM products WHERE slug = $1', [params.slug]);

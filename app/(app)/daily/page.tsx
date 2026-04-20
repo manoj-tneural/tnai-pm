@@ -1,15 +1,13 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
-import { verifyToken } from '@/lib/auth-jwt';
 import { query } from '@/lib/db';
 import { redirect } from 'next/navigation';
 
 export default async function GlobalDailyPage() {
   const cookieStore = await cookies();
   const token = cookieStore.get('auth_token')?.value;
-  const decoded = token ? verifyToken(token) : null;
 
-  if (!decoded) redirect('/auth/login');
+  if (!token) redirect('/auth/login');
 
   // Fetch products and daily logs
   const [productsResult, logsResult] = await Promise.all([

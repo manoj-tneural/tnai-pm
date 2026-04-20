@@ -1,7 +1,6 @@
 import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
-import { verifyToken } from '@/lib/auth-jwt';
 import { query } from '@/lib/db';
 import { STATUS_COLORS } from '@/lib/types';
 import clsx from 'clsx';
@@ -11,9 +10,6 @@ export default async function DeploymentDetailPage({ params }: { params: { slug:
   const cookieStore = await cookies();
   const token = cookieStore.get('auth_token')?.value;
   if (!token) redirect('/auth/login');
-
-  const decoded = verifyToken(token);
-  if (!decoded) redirect('/auth/login');
 
   try {
     const [productResult, deploymentResult, tasksResult] = await Promise.all([

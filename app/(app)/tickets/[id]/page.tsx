@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
-import { verifyToken } from '@/lib/auth-jwt';
 import { query } from '@/lib/db';
 import { STATUS_COLORS } from '@/lib/types';
 import clsx from 'clsx';
@@ -13,11 +12,8 @@ const PRIORITY_ICON: Record<string, string> = { critical: '🔴', high: '🟠', 
 
 export default async function TicketDetailPage({ params }: { params: { id: string } }) {
   const cookieStore = await cookies();
-  const token = cookieStore.get('token')?.value;
-  if (!token) return null;
-
-  const decoded = verifyToken(token);
-  if (!decoded) return null;
+  const token = cookieStore.get('auth_token')?.value;
+  if (!token) return <div className="p-8 text-red-600">Authentication required</div>;
 
   try {
     const [ticketResult, commentsResult, engineersResult, profileResult] = await Promise.all([

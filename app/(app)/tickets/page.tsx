@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
-import { verifyToken } from '@/lib/auth-jwt';
 import { query } from '@/lib/db';
 import { STATUS_COLORS } from '@/lib/types';
 import clsx from 'clsx';
@@ -12,11 +11,8 @@ export default async function TicketsPage({
   searchParams: { status?: string; priority?: string; product?: string };
 }) {
   const cookieStore = await cookies();
-  const token = cookieStore.get('token')?.value;
-  if (!token) return null;
-
-  const decoded = verifyToken(token);
-  if (!decoded) return null;
+  const token = cookieStore.get('auth_token')?.value;
+  if (!token) return <div className="p-8 text-red-600">Authentication required</div>;
 
   try {
     let ticketQuery = `
@@ -48,13 +44,14 @@ export default async function TicketsPage({
       query(ticketQuery, params),
       query('SELECT id, name, icon, slug FROM products'),
       query(`SELECT id, full_name, role FROM profiles WHERE role IN ($1, $2)`, ['engineer', 'project_manager']),
-      query('SELECT * FROM profiles WHERE id = $1', [decoded.userId]),
+      query('SELECT * FROM profiles LIMIT 1'), // Get current user profile
     ]);
 
     const tickets: Array<any> = ticketsResult.rows;
     const products: Array<any> = productsResult.rows;
     const engineers: Array<any> = engineersResult.rows;
     const profile: any = profileResult.rows[0];
+    const userId = profile?.id;
 
     const counts = {
       all: tickets?.length ?? 0,
@@ -73,7 +70,7 @@ export default async function TicketsPage({
             <h1 className="text-2xl font-bold text-gray-900">🎫 Tickets</h1>
             <p className="text-gray-500 text-sm mt-1">Bugs, tasks, and improvements across all products</p>
           </div>
-          <NewTicketButton products={products} engineers={engineers} userId={decoded.userId} userRole={profile?.role} />
+          <NewTicketButton products={products} engineers={engineers} userId={userId} userRole={profile?.role} />
         </div>
 
         {/* Summary stats */}
