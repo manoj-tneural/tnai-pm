@@ -1,35 +1,19 @@
 -- ============================================================
 -- TNAI Project Management Platform — DB Schema + Seed
+-- Self-Managed PostgreSQL (Custom JWT Auth)
 -- ============================================================
 
--- PROFILES (extends Supabase auth.users)
+-- PROFILES (Custom Auth Table)
 create table if not exists public.profiles (
-  id           uuid primary key references auth.users(id) on delete cascade,
+  id           uuid primary key default gen_random_uuid(),
   email        text unique not null,
+  password_hash text,
   full_name    text,
   role         text not null default 'engineer' check (role in ('management','engineer','project_manager','sales','testing')),
   avatar_url   text,
   is_active    boolean default true,
   created_at   timestamptz default now()
 );
-alter table public.profiles enable row level security;
-create policy "Users can view all profiles" on public.profiles for select using (true);
-create policy "Users can update own profile" on public.profiles for update using (auth.uid() = id);
-create policy "Service role full access" on public.profiles using (true) with check (true);
-
--- Auto-create profile on signup
-create or replace function public.handle_new_user()
-returns trigger language plpgsql security definer set search_path = public as $$
-begin
-  insert into public.profiles (id, email, full_name)
-  values (new.id, new.email, new.raw_user_meta_data->>'full_name');
-  return new;
-end;
-$$;
-drop trigger if exists on_auth_user_created on auth.users;
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute procedure public.handle_new_user();
 
 -- PRODUCTS
 create table if not exists public.products (
@@ -44,8 +28,6 @@ create table if not exists public.products (
   icon         text default '🤖',
   created_at   timestamptz default now()
 );
-alter table public.products enable row level security;
-create policy "All authenticated users can view products" on public.products for select using (auth.role() = 'authenticated');
 
 -- FEATURES
 create table if not exists public.features (
@@ -67,11 +49,6 @@ create table if not exists public.features (
   sort_order      int default 0,
   created_at      timestamptz default now()
 );
-alter table public.features enable row level security;
-create policy "All authenticated can view features" on public.features for select using (auth.role() = 'authenticated');
-create policy "Engineers and PM can modify features" on public.features for all using (
-  exists(select 1 from public.profiles where id = auth.uid() and role in ('engineer','project_manager','management'))
-);
 
 -- DEPLOYMENTS (customer deployments)
 create table if not exists public.deployments (
@@ -84,11 +61,6 @@ create table if not exists public.deployments (
   num_stores      int default 1,
   num_cameras     int default 0,
   created_at      timestamptz default now()
-);
-alter table public.deployments enable row level security;
-create policy "All authenticated can view deployments" on public.deployments for select using (auth.role() = 'authenticated');
-create policy "PM and management can manage deployments" on public.deployments for all using (
-  exists(select 1 from public.profiles where id = auth.uid() and role in ('project_manager','management','engineer'))
 );
 
 -- DEPLOYMENT TASKS
@@ -106,11 +78,6 @@ create table if not exists public.deployment_tasks (
   sort_order      int default 0,
   created_at      timestamptz default now()
 );
-alter table public.deployment_tasks enable row level security;
-create policy "All authenticated can view tasks" on public.deployment_tasks for select using (auth.role() = 'authenticated');
-create policy "Engineers and PM can update tasks" on public.deployment_tasks for update using (
-  exists(select 1 from public.profiles where id = auth.uid() and role in ('engineer','project_manager','management'))
-);
 
 -- DAILY LOGS
 create table if not exists public.daily_logs (
@@ -124,9 +91,6 @@ create table if not exists public.daily_logs (
   created_at  timestamptz default now(),
   unique (user_id, product_id, log_date)
 );
-alter table public.daily_logs enable row level security;
-create policy "Users see all logs" on public.daily_logs for select using (auth.role() = 'authenticated');
-create policy "Users manage own logs" on public.daily_logs for all using (user_id = auth.uid());
 
 -- TICKETS
 create table if not exists public.tickets (
@@ -144,13 +108,6 @@ create table if not exists public.tickets (
   created_at    timestamptz default now(),
   updated_at    timestamptz default now()
 );
-alter table public.tickets enable row level security;
-create policy "All authenticated can view tickets" on public.tickets for select using (auth.role() = 'authenticated');
-create policy "Authenticated can create tickets" on public.tickets for insert with check (auth.role() = 'authenticated');
-create policy "Assignee reporter PM management can update" on public.tickets for update using (
-  reporter_id = auth.uid() or assignee_id = auth.uid() or
-  exists(select 1 from public.profiles where id = auth.uid() and role in ('project_manager','management'))
-);
 
 -- TICKET COMMENTS
 create table if not exists public.ticket_comments (
@@ -160,10 +117,6 @@ create table if not exists public.ticket_comments (
   comment    text not null,
   created_at timestamptz default now()
 );
-alter table public.ticket_comments enable row level security;
-create policy "All authenticated can view comments" on public.ticket_comments for select using (auth.role() = 'authenticated');
-create policy "Authenticated can add comments" on public.ticket_comments for insert with check (user_id = auth.uid());
-create policy "Author can delete own comments" on public.ticket_comments for delete using (user_id = auth.uid());
 
 -- BACKEND TASKS (SpaceZap backend rework tracking)
 create table if not exists public.dev_tasks (
@@ -179,11 +132,6 @@ create table if not exists public.dev_tasks (
   status       text default 'todo' check (status in ('done','in_progress','todo','blocked')),
   assignee_id  uuid references public.profiles(id) on delete set null,
   created_at   timestamptz default now()
-);
-alter table public.dev_tasks enable row level security;
-create policy "All authenticated can view dev tasks" on public.dev_tasks for select using (auth.role() = 'authenticated');
-create policy "Engineers PM management can manage dev tasks" on public.dev_tasks for all using (
-  exists(select 1 from public.profiles where id = auth.uid() and role in ('engineer','project_manager','management'))
 );
 
 -- ============================================================
