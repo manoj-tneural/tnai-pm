@@ -103,42 +103,34 @@ cd ~/tnai-pm
 echo "Installing dependencies..."
 npm install
 
-# Build Next.js app
-echo "Building Next.js app..."
-npm run build
-
-echo -e "${GREEN}✓ App cloned and built${NC}\n"
-
-# ==================== STEP 6: SETUP ENVIRONMENT ====================
+# ==================== STEP 6: SETUP ENVIRONMENT (Before Build) ====================
 echo -e "${YELLOW}[STEP 6/7] Setting up environment...${NC}"
 
-# Check if .env.production exists
-if [ ! -f ".env.production" ]; then
-    echo -e "${YELLOW}Creating .env.production file...${NC}"
-    echo ""
-    
-    # Get EC2 public IP
-    EC2_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
-    
-    cat > .env.production << EOF
+# Get EC2 public IP
+EC2_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
+
+# Create .env.production with dummy Supabase values for build
+cat > .env.production << EOF
 # Database (PostgreSQL on this EC2 instance)
 DATABASE_URL=postgresql://tnai_user:tneural123@localhost:5432/tnai_pm
 
 # Supabase compatibility (dummy values for auth system)
 NEXT_PUBLIC_SUPABASE_URL=http://${EC2_IP}
-NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy-anon-key-for-local-auth
-SUPABASE_SERVICE_ROLE_KEY=dummy-service-key-for-local-auth
+NEXT_PUBLIC_SUPABASE_ANON_KEY=pk_live_dummy_key_for_local_auth
+SUPABASE_SERVICE_ROLE_KEY=sbprivate_dummy_key_for_local_auth
 
 # Next.js production settings
 NODE_ENV=production
 NEXT_PUBLIC_APP_URL=http://${EC2_IP}
 EOF
-    
-    echo -e "${GREEN}✓ .env.production created${NC}"
-else
-    echo "✓ .env.production already exists"
-fi
-echo ""
+
+echo -e "${GREEN}✓ .env.production created${NC}\n"
+
+# Build Next.js app (now that env vars are set)
+echo "Building Next.js app..."
+npm run build
+
+echo -e "${GREEN}✓ App cloned and built${NC}\n"
 
 # ==================== STEP 7: START APP WITH PM2 ====================
 echo -e "${YELLOW}[STEP 7/7] Starting app with PM2...${NC}"
