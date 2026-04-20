@@ -8,9 +8,12 @@ const publicRoutes = ['/auth/login', '/auth/signup', '/api/auth/login', '/api/au
 function verifyTokenInMiddleware(token: string): boolean {
   try {
     const secret = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+    console.log('[Middleware Auth] Verifying token with secret length:', secret.length);
     jwt.verify(token, secret);
+    console.log('[Middleware Auth] Token verified successfully');
     return true;
-  } catch {
+  } catch (error) {
+    console.error('[Middleware Auth] Token verification failed:', error instanceof Error ? error.message : String(error));
     return false;
   }
 }
@@ -25,12 +28,15 @@ export function middleware(request: NextRequest) {
 
   // For all other routes, require authentication
   const token = request.cookies.get('auth_token')?.value;
+  console.log(`[Middleware] Request to ${pathname}, token present:`, !!token);
 
   if (!token) {
     // No token, redirect to login
     console.log(`[Middleware] No token found for ${pathname}, redirecting to login`);
     return NextResponse.redirect(new URL('/auth/login', request.url));
   }
+
+  console.log(`[Middleware] Token length: ${token.length}, first 20 chars: ${token.substring(0, 20)}...`);
 
   // Verify token validity
   if (!verifyTokenInMiddleware(token)) {
@@ -42,6 +48,7 @@ export function middleware(request: NextRequest) {
   }
 
   // Token is valid, allow the request
+  console.log(`[Middleware] Token valid for ${pathname}, allowing request`);
   return NextResponse.next();
 }
 
