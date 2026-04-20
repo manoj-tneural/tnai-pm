@@ -8,10 +8,10 @@ import clsx from 'clsx';
 export default async function DashboardPage() {
   const cookieStore = await cookies();
   const token = cookieStore.get('auth_token')?.value;
-  if (!token) return null;
+  if (!token) return <div className="p-8 text-red-600">No authentication token found</div>;
 
   const decoded = verifyToken(token);
-  if (!decoded) return null;
+  if (!decoded) return <div className="p-8 text-red-600">Invalid authentication token</div>;
 
   try {
     const [
@@ -266,7 +266,23 @@ export default async function DashboardPage() {
     </div>
   );
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error('Failed to load dashboard:', error);
-    return <div className="p-8 text-red-600">Error loading dashboard</div>;
+    return (
+      <div className="min-h-screen bg-red-50 p-8">
+        <div className="max-w-2xl mx-auto">
+          <h1 className="text-3xl font-bold text-red-600 mb-4">❌ Dashboard Error</h1>
+          <div className="bg-white border border-red-300 rounded-lg p-6 mb-4">
+            <p className="text-red-700 font-mono whitespace-pre-wrap break-words">{errorMessage}</p>
+          </div>
+          <p className="text-gray-600 mb-4">
+            This error occurred while loading dashboard data. Check the server logs for more details.
+          </p>
+          <p className="text-gray-500 text-sm">
+            Full error logged to browser console (F12 → Console tab)
+          </p>
+        </div>
+      </div>
+    );
   }
 }
