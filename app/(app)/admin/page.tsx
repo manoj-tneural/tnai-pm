@@ -5,6 +5,12 @@ import { ROLE_LABELS, ROLE_COLORS } from '@/lib/types';
 import clsx from 'clsx';
 import RoleChanger from './RoleChanger';
 
+const formatDate = (date: any): string => {
+  if (!date) return '—';
+  const d = typeof date === 'string' ? new Date(date) : date;
+  return d instanceof Date ? d.toISOString().split('T')[0] : String(date).split('T')[0];
+};
+
 export default async function AdminPage() {
   const cookieStore = await cookies();
   const token = cookieStore.get('auth_token')?.value;
@@ -63,7 +69,9 @@ export default async function AdminPage() {
                       {u.is_active ? 'Active' : 'Inactive'}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-gray-400 text-xs">{u.created_at.split('T')[0]}</td>
+                  <td className="px-4 py-3 text-gray-400 text-xs">
+                    {formatDate(u.created_at)}
+                  </td>
                   <td className="px-4 py-3">
                     {u.id !== user?.id && <RoleChanger userId={u.id} currentRole={u.role} />}
                   </td>
