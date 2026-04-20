@@ -4,33 +4,53 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, password, name, role } = await req.json();
-
-    if (!email || !password || !name) {
+    // Parse request body with proper error handling
+    let body;
+    try {
+      body = await req.json();
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
       return NextResponse.json(
-        { error: 'Email, password, and name are required' },
+        { error: 'Invalid JSON in request body' },
         { status: 400 }
       );
     }
 
-    // Validate email domain
-    if (!email.endsWith('@tneuralai.com')) {
+    const { email, password, name, role } = body;
+
+    // Trim whitespace
+    const trimmedEmail = email?.trim();
+    const trimmedPassword = password?.trim();
+    const trimmedName = name?.trim();
+
+    console.log('Signup attempt:', { email: trimmedEmail, name: trimmedName, hasPassword: !!trimmedPassword });
+
+    if (!trimmedEmail || !trimmedPassword || !trimmedName) {
       return NextResponse.json(
-        { error: 'Only @tneuralai.com email addresses can register' },
-        { status: 403 }
+        { error: `Missing required fields: email=${!!trimmedEmail}, password=${!!trimmedPassword}, name=${!!trimmedName}` },
+        { status: 400 }
+      );
+    }
+
+    // Validate email format (basic check)
+    if (!trimmedEmail.includes('@')) {
+      return NextResponse.json(
+        { error: 'Invalid email format' },
+        { status: 400 }
       );
     }
 
     // Validate password strength
-    if (password.length < 8) {
+    if (trimmedPassword.length < 6) {
       return NextResponse.json(
-        { error: 'Password must be at least 8 characters' },
+        { error: 'Password must be at least 6 characters' },
         { status: 400 }
       );
     }
 
     // Check if user already exists
-    const existingUser = await query('SELECT id FROM profiles WHERE email = $1', [email]);
+    console.log('Checking for existing user:', trimmedEmail);
+    const existingUser = await query('SELECT id FROM profiles WHERE email = $1', [trimmedEmail.toLowerCase()]);
 
     if (existingUser.rows.length > 0) {
       return NextResponse.json(
@@ -40,20 +60,32 @@ export async function POST(req: NextRequest) {
     }
 
     // Hash password
-    const passwordHash = await hashPassword(password);
+    console.log('Hashing password...');
+    const passwordHash = await hashPassword(trimmedPassword);
 
     // Create user
     const userRole = role || 'engineer';
+    console.log('Inserting user into database...');
     const result = await query(
       `INSERT INTO profiles (email, password_hash, full_name, role) 
        VALUES ($1, $2, $3, $4) 
        RETURNING id, email, full_name, role`,
-      [email, passwordHash, name, userRole]
+      [trimmedEmail.toLowerCase(), passwordHash, trimmedName, userRole]
     );
 
+    if (!result.rows[0]) {
+      console.error('Failed to insert user');
+      return NextResponse.json(
+        { error: 'Failed to create user' },
+        { status: 500 }
+      );
+    }
+
     const user = result.rows[0];
+    console.log('User created:', user.id);
 
     // Create JWT token
+    console.log('Creating JWT token...');
     const token = createToken(user.id, user.email, user.role);
 
     // Return user data and token
@@ -80,8 +112,9 @@ export async function POST(req: NextRequest) {
     return response;
   } catch (error) {
     console.error('Signup error:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: `Internal server error: ${errorMessage}` },
       { status: 500 }
     );
   }

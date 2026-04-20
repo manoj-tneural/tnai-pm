@@ -4,27 +4,39 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, password } = await req.json();
-
-    if (!email || !password) {
+    // Parse request body with proper error handling
+    let body;
+    try {
+      body = await req.json();
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
       return NextResponse.json(
-        { error: 'Email and password are required' },
+        { error: 'Invalid JSON in request body' },
         { status: 400 }
       );
     }
 
-    // Only allow @tneuralai.com emails
-    if (!email.endsWith('@tneuralai.com')) {
+    const { email, password } = body;
+
+    // Trim whitespace
+    const trimmedEmail = email?.trim();
+    const trimmedPassword = password?.trim();
+
+    console.log('Login attempt:', { email: trimmedEmail, hasPassword: !!trimmedPassword });
+
+    if (!trimmedEmail || !trimmedPassword) {
       return NextResponse.json(
-        { error: 'Only @tneuralai.com email addresses are allowed' },
-        { status: 403 }
+        { error: `Missing required fields: email=${!!trimmedEmail}, password=${!!trimmedPassword}` },
+        { status: 400 }
       );
     }
 
     // Get user from database
-    const result = await query('SELECT * FROM profiles WHERE email = $1', [email]);
+    console.log('Looking up user...');
+    const result = await query('SELECT * FROM profiles WHERE email = $1', [trimmedEmail.toLowerCase()]);
 
     if (result.rows.length === 0) {
+      console.log('User not found:', trimmedEmail);
       return NextResponse.json(
         { error: 'Invalid email or password' },
         { status: 401 }
@@ -32,16 +44,30 @@ export async function POST(req: NextRequest) {
     }
 
     const user = result.rows[0];
+    console.log('User found:', user.id, 'checking password...');
+
+    // Check password_hash exists
+    if (!user.password_hash) {
+      console.error('User has no password_hash:', user.id);
+      return NextResponse.json(
+        { error: 'Invalid credentials' },
+        { status: 401 }
+      );
+    }
 
     // Verify password
-    const isPasswordValid = await verifyPassword(password, user.password_hash);
+    console.log('Verifying password...');
+    const isPasswordValid = await verifyPassword(trimmedPassword, user.password_hash);
 
     if (!isPasswordValid) {
+      console.log('Password invalid for user:', user.id);
       return NextResponse.json(
         { error: 'Invalid email or password' },
         { status: 401 }
       );
     }
+
+    console.log('Login successful for user:', user.id);
 
     // Create JWT token
     const token = createToken(user.id, user.email, user.role);
@@ -70,8 +96,9 @@ export async function POST(req: NextRequest) {
     return response;
   } catch (error) {
     console.error('Login error:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: `Internal server error: ${errorMessage}` },
       { status: 500 }
     );
   }
