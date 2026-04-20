@@ -100,14 +100,20 @@ export async function POST(req: NextRequest) {
     });
 
     // Set cookie
+    // Note: Don't use secure:true on HTTP (like development/staging)
+    // Only use secure on true HTTPS connections
+    const isSecure = req.headers.get('x-forwarded-proto') === 'https' || req.nextUrl.protocol === 'https:';
+    
     response.cookies.set({
       name: 'auth_token',
       value: token,
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: isSecure,
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7, // 7 days
     });
+    
+    console.log('Cookie set with secure:', isSecure);
 
     return response;
   } catch (error) {
