@@ -30,9 +30,10 @@ export default async function DailyPage({ params }: { params: { slug: string } }
     const productData: any = productResult.rows[0];
     const profile: any = profileResult.rows[0];
     const logs: Array<any> = logsResult.rows;
+    const userId = profile?.id;
 
     const today = new Date().toISOString().split('T')[0];
-    const myLog = (logs ?? []).find(l => l.user_id === decoded.userId && l.log_date === today);
+    const myLog = (logs ?? []).find(l => l.user_id === userId && l.log_date === today);
 
     // Group by date
     const byDate: Record<string, typeof logs> = {};
@@ -65,7 +66,7 @@ export default async function DailyPage({ params }: { params: { slug: string } }
           </div>
           <DailyLogForm
             productId={product.id}
-            userId={decoded.userId}
+            userId={userId}
             existingLog={myLog ?? null}
             today={today}
           />
@@ -89,7 +90,7 @@ export default async function DailyPage({ params }: { params: { slug: string } }
                       <span className="font-medium text-sm text-gray-900">{log.full_name ?? 'Unknown'}</span>
                       <span className="text-xs text-gray-400">{log.role}</span>
                     </div>
-                    {log.user_id === decoded.userId && <span className="text-xs text-blue-600">Your log</span>}
+                    {log.user_id === userId && <span className="text-xs text-blue-600">Your log</span>}
                   </div>
                   <div className="ml-9 space-y-2">
                     {log.yesterday && (

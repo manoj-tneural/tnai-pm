@@ -31,18 +31,19 @@ export default async function TicketDetailPage({ params }: { params: { id: strin
              WHERE c.ticket_id = $1
              ORDER BY c.created_at`, [params.id]),
       query(`SELECT id, full_name, role FROM profiles WHERE role IN ($1, $2, $3)`, ['engineer', 'project_manager', 'management']),
-      query('SELECT * FROM profiles WHERE id = $1', [decoded.userId]),
+      query('SELECT * FROM profiles LIMIT 1'),
     ]);
 
     const ticket: any = ticketResult.rows[0];
     const comments: Array<any> = commentsResult.rows;
     const engineers: Array<any> = engineersResult.rows;
     const user: any = profileResult.rows[0];
+    const userId = user?.id;
     
     if (!ticket) notFound();
 
     const canEdit = user?.role === 'management' || user?.role === 'project_manager' ||
-      ticket.reporter_id === decoded.userId || ticket.assignee_id === decoded.userId;
+      ticket.reporter_id === userId || ticket.assignee_id === userId;
 
     return (
     <div className="p-8 max-w-5xl mx-auto">
