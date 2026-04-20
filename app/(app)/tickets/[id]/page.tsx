@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { createServerSupabaseClient } from '@/lib/supabase-server';
+import { cookies } from 'next/headers';
+import { verifyToken } from '@/lib/auth-jwt';
+import { query } from '@/lib/db';
 import { STATUS_COLORS } from '@/lib/types';
 import clsx from 'clsx';
 import TicketActions from './TicketActions';
@@ -10,25 +12,43 @@ const TYPE_ICON: Record<string, string> = { bug: '🐛', feature: '✨', improve
 const PRIORITY_ICON: Record<string, string> = { critical: '🔴', high: '🟠', medium: '🟡', low: '🟢' };
 
 export default async function TicketDetailPage({ params }: { params: { id: string } }) {
-  const supabase = createServerSupabaseClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const cookieStore = await cookies();
+  const token = cookieStore.get('token')?.value;
+  if (!token) return null;
 
-  const [{ data: ticket }, { data: comments }, { data: engineers }, { data: profile }] = await Promise.all([
-    supabase.from('tickets')
-      .select('*, products(name, icon, slug, color), reporter:reporter_id(full_name, role), assignee:assignee_id(full_name, role)')
-      .eq('id', params.id).single(),
-    supabase.from('ticket_comments')
-      .select('*, profiles(full_name, role)')
-      .eq('ticket_id', params.id).order('created_at'),
-    supabase.from('profiles').select('id, full_name, role').in('role', ['engineer', 'project_manager', 'management']),
-    supabase.from('profiles').select('*').eq('id', user!.id).single(),
-  ]);
-  if (!ticket) notFound();
+  const decoded = verifyToken(token);
+  if (!decoded) return null;
 
-  const canEdit = profile?.role === 'management' || profile?.role === 'project_manager' ||
-    ticket.reporter_id === user!.id || ticket.assignee_id === user!.id;
+  try {
+    const [ticketResult, commentsResult, engineersResult, profileResult] = await Promise.all([
+      query(`SELECT t.*, p.name as product_name, p.icon, p.slug, p.color,
+                    r.full_name as reporter_full_name, r.role as reporter_role,
+                    a.full_name as assignee_full_name, a.role as assignee_role
+             FROM tickets t
+             LEFT JOIN products p ON t.product_id = p.id
+             LEFT JOIN profiles r ON t.reporter_id = r.id
+             LEFT JOIN profiles a ON t.assignee_id = a.id
+             WHERE t.id = $1`, [params.id]),
+      query(`SELECT c.*, p.full_name, p.role
+             FROM ticket_comments c
+             LEFT JOIN profiles p ON c.user_id = p.id
+             WHERE c.ticket_id = $1
+             ORDER BY c.created_at`, [params.id]),
+      query(`SELECT id, full_name, role FROM profiles WHERE role IN ($1, $2, $3)`, ['engineer', 'project_manager', 'management']),
+      query('SELECT * FROM profiles WHERE id = $1', [decoded.userId]),
+    ]);
 
-  return (
+    const ticket: any = ticketResult.rows[0];
+    const comments: Array<any> = commentsResult.rows;
+    const engineers: Array<any> = engineersResult.rows;
+    const user: any = profileResult.rows[0];
+    
+    if (!ticket) notFound();
+
+    const canEdit = user?.role === 'management' || user?.role === 'project_manager' ||
+      ticket.reporter_id === decoded.userId || ticket.assignee_id === decoded.userId;
+
+    return (
     <div className="p-8 max-w-5xl mx-auto">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
@@ -77,12 +97,12 @@ export default async function TicketDetailPage({ params }: { params: { id: strin
               {(comments ?? []).map(c => (
                 <div key={c.id} className="flex gap-3">
                   <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                    {(c.profiles?.full_name ?? 'U')[0].toUpperCase()}
+                    {(c.full_name ?? 'U')[0].toUpperCase()}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="font-medium text-sm text-gray-900">{c.profiles?.full_name}</span>
-                      <span className="text-gray-400 text-xs">{c.profiles?.role}</span>
+                      <span className="font-medium text-sm text-gray-900">{c.full_name}</span>
+                      <span className="text-gray-400 text-xs">{c.role}</span>
                       <span className="text-gray-400 text-xs">{c.created_at.split('T')[0]}</span>
                     </div>
                     <p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3 whitespace-pre-wrap">{c.comment}</p>
@@ -145,11 +165,15 @@ export default async function TicketDetailPage({ params }: { params: { id: strin
               ticketId={ticket.id}
               currentStatus={ticket.status}
               currentAssignee={ticket.assignee_id}
-              engineers={engineers ?? []}
+              engineers={engineers}
             />
           )}
         </div>
       </div>
     </div>
-  );
+    );
+  } catch (error) {
+    console.error('Failed to load ticket:', error);
+    return <div className="p-8 text-red-600">Error loading ticket</div>;
+  }
 }

@@ -1,7 +1,6 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase';
 import { Profile, Product } from '@/lib/types';
 import clsx from 'clsx';
 
@@ -19,12 +18,17 @@ const NAV = [
 export default function Sidebar({ profile, products }: Props) {
   const pathname = usePathname();
   const router = useRouter();
-  const supabase = createClient();
 
   async function signOut() {
-    await supabase.auth.signOut();
-    router.push('/auth/login');
-    router.refresh();
+    try {
+      const response = await fetch('/api/auth/logout', { method: 'POST' });
+      if (response.ok) {
+        router.push('/auth/login');
+        router.refresh();
+      }
+    } catch (err) {
+      console.error('Logout failed:', err);
+    }
   }
 
   const initials = profile?.full_name

@@ -1,5 +1,7 @@
 import Link from 'next/link';
-import { createServerSupabaseClient } from '@/lib/supabase-server';
+import { cookies } from 'next/headers';
+import { verifyToken } from '@/lib/auth-jwt';
+import { query } from '@/lib/db';
 import { STATUS_COLORS } from '@/lib/types';
 import clsx from 'clsx';
 import NewTicketButton from './NewTicketButton';
@@ -9,47 +11,73 @@ export default async function TicketsPage({
 }: {
   searchParams: { status?: string; priority?: string; product?: string };
 }) {
-  const supabase = createServerSupabaseClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const cookieStore = await cookies();
+  const token = cookieStore.get('token')?.value;
+  if (!token) return null;
 
-  let query = supabase
-    .from('tickets')
-    .select('*, products(name, icon, slug), reporter:reporter_id(full_name), assignee:assignee_id(full_name)')
-    .order('created_at', { ascending: false });
+  const decoded = verifyToken(token);
+  if (!decoded) return null;
 
-  if (searchParams.status) query = query.eq('status', searchParams.status);
-  if (searchParams.priority) query = query.eq('priority', searchParams.priority);
-  if (searchParams.product) query = query.eq('products.slug', searchParams.product);
+  try {
+    let ticketQuery = `
+      SELECT tickets.*, products.name as product_name, products.icon, products.slug,
+             reporter.full_name as reporter_full_name, assignee.full_name as assignee_full_name
+      FROM tickets
+      LEFT JOIN products ON tickets.product_id = products.id
+      LEFT JOIN profiles reporter ON tickets.reporter_id = reporter.id
+      LEFT JOIN profiles assignee ON tickets.assignee_id = assignee.id
+      WHERE 1=1`;
+    const params: any[] = [];
 
-  const [{ data: tickets }, { data: products }, { data: engineers }, { data: profile }] = await Promise.all([
-    query,
-    supabase.from('products').select('id, name, icon, slug'),
-    supabase.from('profiles').select('id, full_name, role').in('role', ['engineer', 'project_manager']),
-    supabase.from('profiles').select('*').eq('id', user!.id).single(),
-  ]);
+    if (searchParams.status) {
+      ticketQuery += ` AND tickets.status = $${params.length + 1}`;
+      params.push(searchParams.status);
+    }
+    if (searchParams.priority) {
+      ticketQuery += ` AND tickets.priority = $${params.length + 1}`;
+      params.push(searchParams.priority);
+    }
+    if (searchParams.product) {
+      ticketQuery += ` AND products.slug = $${params.length + 1}`;
+      params.push(searchParams.product);
+    }
 
-  const counts = {
-    all: tickets?.length ?? 0,
-    open: tickets?.filter(t => t.status === 'open').length ?? 0,
-    in_progress: tickets?.filter(t => t.status === 'in_progress').length ?? 0,
-    critical: tickets?.filter(t => t.priority === 'critical').length ?? 0,
-  };
+    ticketQuery += ` ORDER BY tickets.created_at DESC`;
 
-  const PRIORITY_ICON: Record<string, string> = { critical: '🔴', high: '🟠', medium: '🟡', low: '🟢' };
-  const TYPE_ICON: Record<string, string> = { bug: '🐛', feature: '✨', improvement: '⚡', task: '📋', question: '❓' };
+    const [ticketsResult, productsResult, engineersResult, profileResult] = await Promise.all([
+      query(ticketQuery, params),
+      query('SELECT id, name, icon, slug FROM products'),
+      query(`SELECT id, full_name, role FROM profiles WHERE role IN ($1, $2)`, ['engineer', 'project_manager']),
+      query('SELECT * FROM profiles WHERE id = $1', [decoded.userId]),
+    ]);
 
-  return (
-    <div className="p-8 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">🎫 Tickets</h1>
-          <p className="text-gray-500 text-sm mt-1">Bugs, tasks, and improvements across all products</p>
+    const tickets: Array<any> = ticketsResult.rows;
+    const products: Array<any> = productsResult.rows;
+    const engineers: Array<any> = engineersResult.rows;
+    const profile: any = profileResult.rows[0];
+
+    const counts = {
+      all: tickets?.length ?? 0,
+      open: tickets?.filter(t => t.status === 'open').length ?? 0,
+      in_progress: tickets?.filter(t => t.status === 'in_progress').length ?? 0,
+      critical: tickets?.filter(t => t.priority === 'critical').length ?? 0,
+    };
+
+    const PRIORITY_ICON: Record<string, string> = { critical: '🔴', high: '🟠', medium: '🟡', low: '🟢' };
+    const TYPE_ICON: Record<string, string> = { bug: '🐛', feature: '✨', improvement: '⚡', task: '📋', question: '❓' };
+
+    return (
+      <div className="p-8 max-w-7xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">🎫 Tickets</h1>
+            <p className="text-gray-500 text-sm mt-1">Bugs, tasks, and improvements across all products</p>
+          </div>
+          <NewTicketButton products={products} engineers={engineers} userId={decoded.userId} userRole={profile?.role} />
         </div>
-        <NewTicketButton products={products ?? []} engineers={engineers ?? []} userId={user!.id} userRole={profile?.role} />
-      </div>
 
-      {/* Summary stats */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
+        {/* Summary stats */}
+        <div className="grid grid-cols-4 gap-4 mb-6">
         {[
           { label: 'Total Tickets', value: counts.all, cls: 'bg-gray-50' },
           { label: 'Open', value: counts.open, cls: 'bg-yellow-50 text-yellow-700' },
@@ -134,12 +162,12 @@ export default async function TicketsPage({
                   </span>
                 </td>
                 <td className="px-4 py-3 text-gray-600 text-xs">
-                  <span>{t.products?.icon} {t.products?.name}</span>
+                  <span>{t.icon} {t.product_name}</span>
                 </td>
                 <td className="px-4 py-3 text-gray-600 text-xs">
-                  {t.assignee?.full_name ?? <span className="text-gray-300">Unassigned</span>}
+                  {t.assignee_full_name ? <span>{t.assignee_full_name}</span> : <span className="text-gray-300">Unassigned</span>}
                 </td>
-                <td className="px-4 py-3 text-gray-400 text-xs">{t.reporter?.full_name ?? '—'}</td>
+                <td className="px-4 py-3 text-gray-400 text-xs">{t.reporter_full_name ?? '—'}</td>
                 <td className="px-4 py-3 text-gray-400 text-xs">{t.created_at.split('T')[0]}</td>
               </tr>
             ))}
@@ -153,5 +181,9 @@ export default async function TicketsPage({
         )}
       </div>
     </div>
-  );
+    );
+  } catch (error) {
+    console.error('Failed to load tickets:', error);
+    return <div className="p-8 text-red-600">Error loading tickets</div>;
+  }
 }

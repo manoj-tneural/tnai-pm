@@ -1,6 +1,8 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
-import { createServerSupabaseClient } from '@/lib/supabase-server';
+import { cookies } from 'next/headers';
+import { verifyToken } from '@/lib/auth-jwt';
+import { query } from '@/lib/db';
 import clsx from 'clsx';
 
 const STATUS_CLS: Record<string, string> = {
@@ -11,15 +13,29 @@ const STATUS_CLS: Record<string, string> = {
 };
 
 export default async function DevTasksPage({ params }: { params: { slug: string } }) {
-  const supabase = createServerSupabaseClient();
-  const { data: product } = await supabase.from('products').select('*').eq('slug', params.slug).single();
-  if (!product) notFound();
+  const cookieStore = await cookies();
+  const token = cookieStore.get('auth_token')?.value;
+  if (!token) redirect('/auth/login');
 
-  const { data: tasks } = await supabase
-    .from('dev_tasks').select('*, assignee:assignee_id(full_name)')
-    .eq('product_id', product.id).order('task_id');
+  const decoded = verifyToken(token);
+  if (!decoded) redirect('/auth/login');
 
-  if ((tasks ?? []).length === 0) {
+  try {
+    const productResult = await query('SELECT * FROM products WHERE slug = $1', [params.slug]);
+    const product = productResult.rows[0];
+    if (!product) notFound();
+
+    const tasksResult = await query(
+      `SELECT dt.*, p.full_name as assignee_full_name 
+       FROM dev_tasks dt
+       LEFT JOIN profiles p ON dt.assignee_id = p.id
+       WHERE dt.product_id = $1 
+       ORDER BY dt.task_id`,
+      [product.id]
+    );
+    const tasks: Array<any> = tasksResult.rows;
+
+    if ((tasks ?? []).length === 0) {
     return (
       <div className="p-8 max-w-5xl mx-auto">
         <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
@@ -44,24 +60,22 @@ export default async function DevTasksPage({ params }: { params: { slug: string 
   const done = (tasks ?? []).filter(t => t.status === 'done').length;
   const total = tasks?.length ?? 0;
 
-  return (
-    <div className="p-8 max-w-5xl mx-auto">
-      <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-        <Link href="/dashboard" className="hover:text-blue-600">Home</Link>
-        <span>/</span>
-        <Link href={`/products/${params.slug}/features`} className="hover:text-blue-600">{product.name}</Link>
-        <span>/</span>
-        <span className="text-gray-800">Dev Tasks</span>
-      </div>
-
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">{product.icon} {product.name} — Backend Dev Tasks</h1>
-          <p className="text-gray-500 text-sm mt-1">{done}/{total} tasks completed</p>
+    return (
+      <div className="p-8 max-w-5xl mx-auto">
+        <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+          <Link href="/dashboard" className="hover:text-blue-600">Home</Link>
+          <span>/</span>
+          <Link href={`/products/${params.slug}/features`} className="hover:text-blue-600">{product.name}</Link>
+          <span>/</span>
+          <span className="text-gray-800">Dev Tasks</span>
         </div>
-      </div>
 
-      {/* Progress */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold">{product.icon} {product.name} — Backend Dev Tasks</h1>
+            <p className="text-gray-500 text-sm mt-1">{done}/{total} tasks completed</p>
+          </div>
+        </div>
       <div className="card p-4 mb-6">
         <div className="flex items-center gap-4">
           <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
@@ -111,5 +125,9 @@ export default async function DevTasksPage({ params }: { params: { slug: string 
         </section>
       ))}
     </div>
-  );
+    );
+  } catch (err) {
+    console.error('Error loading dev tasks:', err);
+    return <div className="p-8 text-red-600">Error loading dev tasks</div>;
+  }
 }

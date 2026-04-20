@@ -1,48 +1,53 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { createServerSupabaseClient } from '@/lib/supabase-server';
+import { query } from '@/lib/db';
 import { STATUS_COLORS } from '@/lib/types';
 import clsx from 'clsx';
 
 export default async function FeaturesPage({ params }: { params: { slug: string } }) {
-  const supabase = createServerSupabaseClient();
-  const { data: product } = await supabase.from('products').select('*').eq('slug', params.slug).single();
-  if (!product) notFound();
+  try {
+    const [productResult, featuresResult] = await Promise.all([
+      query('SELECT * FROM products WHERE slug = $1', [params.slug]),
+      query('SELECT * FROM features ORDER BY sort_order'),
+    ]);
 
-  const { data: features } = await supabase
-    .from('features').select('*').eq('product_id', product.id).order('sort_order');
+    const product: any = productResult.rows[0];
+    if (!product) notFound();
 
-  const categories = [...new Set((features ?? []).map(f => f.category).filter(Boolean))];
-  const byCategory = (cat: string) => (features ?? []).filter(f => f.category === cat);
+    const allFeatures: Array<any> = featuresResult.rows.filter((f: any) => f.product_id === product.id);
+    const features: Array<any> = allFeatures;
 
-  const stats = {
-    total: features?.length ?? 0,
-    completed: features?.filter(f => f.status === 'completed').length ?? 0,
-    in_progress: features?.filter(f => f.status === 'in_progress').length ?? 0,
-    planned: features?.filter(f => f.status === 'planned').length ?? 0,
-  };
+    const categories = [...new Set((features ?? []).map((f: any) => f.category).filter(Boolean))];
+    const byCategory = (cat: string) => (features ?? []).filter((f: any) => f.category === cat);
 
-  return (
-    <div className="p-8 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
-          <Link href="/dashboard" className="hover:text-blue-600">Home</Link>
-          <span>/</span>
-          <span>{product.name}</span>
-          <span>/</span>
-          <span className="text-gray-800">Features</span>
-        </div>
-        <div className="flex items-start gap-4">
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl" style={{ backgroundColor: product.color + '20' }}>
-            {product.icon}
+    const stats = {
+      total: features?.length ?? 0,
+      completed: features?.filter((f: any) => f.status === 'completed').length ?? 0,
+      in_progress: features?.filter((f: any) => f.status === 'in_progress').length ?? 0,
+      planned: features?.filter((f: any) => f.status === 'planned').length ?? 0,
+    };
+
+    return (
+      <div className="p-8 max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-6">
+          <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
+            <Link href="/dashboard" className="hover:text-blue-600">Home</Link>
+            <span>/</span>
+            <span>{product.name}</span>
+            <span>/</span>
+            <span className="text-gray-800">Features</span>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">{product.name} — Features</h1>
-            <p className="text-gray-500 text-sm mt-1">{product.tagline}</p>
+          <div className="flex items-start gap-4">
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl" style={{ backgroundColor: product.color + '20' }}>
+              {product.icon}
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">{product.name} — Features</h1>
+              <p className="text-gray-500 text-sm mt-1">{product.tagline}</p>
+            </div>
           </div>
         </div>
-      </div>
 
       {/* Stats */}
       <div className="grid grid-cols-4 gap-4 mb-6">
@@ -153,5 +158,9 @@ export default async function FeaturesPage({ params }: { params: { slug: string 
         </div>
       </section>
     </div>
-  );
+    );
+  } catch (error) {
+    console.error('Failed to load features:', error);
+    return <div className="p-8 text-red-600">Error loading features</div>;
+  }
 }

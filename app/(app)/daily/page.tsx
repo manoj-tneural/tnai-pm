@@ -1,17 +1,24 @@
 import Link from 'next/link';
-import { createServerSupabaseClient } from '@/lib/supabase-server';
+import { cookies } from 'next/headers';
+import { verifyToken } from '@/lib/auth-jwt';
+import { query } from '@/lib/db';
+import { redirect } from 'next/navigation';
 
 export default async function GlobalDailyPage() {
-  const supabase = createServerSupabaseClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const cookieStore = await cookies();
+  const token = cookieStore.get('auth_token')?.value;
+  const decoded = token ? verifyToken(token) : null;
 
-  const [{ data: products }, { data: logs }] = await Promise.all([
-    supabase.from('products').select('id, name, icon, slug, color'),
-    supabase.from('daily_logs')
-      .select('*, profiles(full_name, role), products(name, icon, slug, color)')
-      .order('log_date', { ascending: false })
-      .limit(100),
+  if (!decoded) redirect('/auth/login');
+
+  // Fetch products and daily logs
+  const [productsResult, logsResult] = await Promise.all([
+    query('SELECT id, name, icon, slug, color FROM products'),
+    query('SELECT dl.*, p.full_name, p.role, pr.name, pr.icon, pr.slug, pr.color FROM daily_logs dl JOIN profiles p ON dl.user_id = p.id JOIN products pr ON dl.product_id = pr.id ORDER BY log_date DESC LIMIT 100'),
   ]);
+
+  const products: Array<any> = productsResult.rows;
+  const logs: Array<any> = logsResult.rows;
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -24,7 +31,7 @@ export default async function GlobalDailyPage() {
   const dates = Object.keys(byDate).sort().reverse();
 
   // My pending products (no log today)
-  const myLogsToday = (logs ?? []).filter(l => l.user_id === user!.id && l.log_date === today);
+  const myLogsToday = (logs ?? []).filter(l => l.user_id === decoded.userId && l.log_date === today);
   const myLoggedProducts = myLogsToday.map(l => l.product_id);
   const pendingProducts = (products ?? []).filter(p => !myLoggedProducts.includes(p.id));
 

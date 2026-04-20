@@ -1,22 +1,26 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase';
+import { addComment } from '@/app/actions/tickets';
 
 export default function CommentBox({ ticketId, userId }: { ticketId: string; userId: string }) {
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!comment.trim()) return;
     setLoading(true);
-    await supabase.from('ticket_comments').insert({ ticket_id: ticketId, user_id: userId, comment: comment.trim() });
-    setComment('');
-    setLoading(false);
-    router.refresh();
+    try {
+      await addComment(ticketId, userId, comment);
+      setComment('');
+      router.refresh();
+    } catch (error) {
+      console.error('Failed to add comment:', error);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (

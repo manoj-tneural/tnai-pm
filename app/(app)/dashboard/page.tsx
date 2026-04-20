@@ -1,47 +1,76 @@
 import Link from 'next/link';
-import { createServerSupabaseClient } from '@/lib/supabase-server';
+import { cookies } from 'next/headers';
+import { verifyToken } from '@/lib/auth-jwt';
+import { query } from '@/lib/db';
 import { STATUS_COLORS } from '@/lib/types';
 import clsx from 'clsx';
 
 export default async function DashboardPage() {
-  const supabase = createServerSupabaseClient();
-  const [
-    { data: products },
-    { data: features },
-    { data: deployments },
-    { data: tickets },
-    { data: devTasks },
-    { data: dailyLogs },
-  ] = await Promise.all([
-    supabase.from('products').select('*').order('name'),
-    supabase.from('features').select('*'),
-    supabase.from('deployments').select('*, products(name, slug, icon, color)'),
-    supabase.from('tickets').select('*, products(name), assignee:assignee_id(full_name)').eq('status', 'open').order('created_at', { ascending: false }).limit(8),
-    supabase.from('dev_tasks').select('*'),
-    supabase.from('daily_logs').select('*, profiles(full_name, role), products(name, icon)').order('log_date', { ascending: false }).limit(10),
-  ]);
+  const cookieStore = await cookies();
+  const token = cookieStore.get('auth_token')?.value;
+  if (!token) return null;
 
-  const featuresByProduct = (slug: string) => {
-    const p = products?.find(x => x.slug === slug);
-    if (!p) return { total: 0, done: 0 };
-    const pf = (features ?? []).filter(f => f.product_id === p.id);
-    return { total: pf.length, done: pf.filter(f => f.status === 'completed').length };
-  };
+  const decoded = verifyToken(token);
+  if (!decoded) return null;
 
-  const deploymentsByProduct = (slug: string) => {
-    const p = products?.find(x => x.slug === slug);
-    if (!p) return { total: 0, active: 0, done: 0 };
-    const deps = (deployments ?? []).filter(d => d.product_id === p.id);
-    return { total: deps.length, active: deps.filter(d => d.status === 'in_progress').length, done: deps.filter(d => d.status === 'completed').length };
-  };
+  try {
+    const [
+      productsResult,
+      featuresResult,
+      deploymentsResult,
+      ticketsResult,
+      devTasksResult,
+      dailyLogsResult,
+    ] = await Promise.all([
+      query('SELECT * FROM products ORDER BY name'),
+      query('SELECT * FROM features'),
+      query(`SELECT deployments.*, products.name, products.slug, products.icon, products.color 
+             FROM deployments 
+             JOIN products ON deployments.product_id = products.id`),
+      query(`SELECT tickets.*, products.name, profiles.full_name as assignee_full_name
+             FROM tickets
+             LEFT JOIN products ON tickets.product_id = products.id
+             LEFT JOIN profiles ON tickets.assignee_id = profiles.id
+             WHERE tickets.status = $1
+             ORDER BY tickets.created_at DESC
+             LIMIT 8`, ['open']),
+      query('SELECT * FROM dev_tasks'),
+      query(`SELECT daily_logs.*, profiles.full_name, profiles.role, products.name as product_name, products.icon
+             FROM daily_logs
+             LEFT JOIN profiles ON daily_logs.user_id = profiles.id
+             LEFT JOIN products ON daily_logs.product_id = products.id
+             ORDER BY daily_logs.log_date DESC
+             LIMIT 10`),
+    ]);
 
-  const openTickets = (tickets ?? []).length;
-  const totalDeployments = (deployments ?? []).length;
-  const activeDeployments = (deployments ?? []).filter(d => d.status === 'in_progress').length;
-  const totalFeatures = (features ?? []).length;
-  const completedFeatures = (features ?? []).filter(f => f.status === 'completed').length;
+    const products: Array<any> = productsResult.rows;
+    const features: Array<any> = featuresResult.rows;
+    const deployments: Array<any> = deploymentsResult.rows;
+    const tickets: Array<any> = ticketsResult.rows;
+    const devTasks: Array<any> = devTasksResult.rows;
+    const dailyLogs: Array<any> = dailyLogsResult.rows;
 
-  return (
+    const featuresByProduct = (slug: string) => {
+      const p = products?.find(x => x.slug === slug);
+      if (!p) return { total: 0, done: 0 };
+      const pf = (features ?? []).filter(f => f.product_id === p.id);
+      return { total: pf.length, done: pf.filter(f => f.status === 'completed').length };
+    };
+
+    const deploymentsByProduct = (slug: string) => {
+      const p = products?.find(x => x.slug === slug);
+      if (!p) return { total: 0, active: 0, done: 0 };
+      const deps = (deployments ?? []).filter(d => d.product_id === p.id);
+      return { total: deps.length, active: deps.filter(d => d.status === 'in_progress').length, done: deps.filter(d => d.status === 'completed').length };
+    };
+
+    const openTickets = (tickets ?? []).length;
+    const totalDeployments = (deployments ?? []).length;
+    const activeDeployments = (deployments ?? []).filter(d => d.status === 'in_progress').length;
+    const totalFeatures = (features ?? []).length;
+    const completedFeatures = (features ?? []).filter(f => f.status === 'completed').length;
+
+    return (
     <div className="p-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-8">
@@ -236,4 +265,8 @@ export default async function DashboardPage() {
       </div>
     </div>
   );
+  } catch (error) {
+    console.error('Failed to load dashboard:', error);
+    return <div className="p-8 text-red-600">Error loading dashboard</div>;
+  }
 }

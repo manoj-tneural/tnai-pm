@@ -1,27 +1,41 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
-import { createServerSupabaseClient } from '@/lib/supabase-server';
+import { cookies } from 'next/headers';
+import { verifyToken } from '@/lib/auth-jwt';
+import { query } from '@/lib/db';
 import { STATUS_COLORS } from '@/lib/types';
 import clsx from 'clsx';
 import TaskStatusToggle from './TaskStatusToggle';
 
 export default async function DeploymentDetailPage({ params }: { params: { slug: string; id: string } }) {
-  const supabase = createServerSupabaseClient();
-  const [{ data: product }, { data: deployment }, { data: tasks }] = await Promise.all([
-    supabase.from('products').select('*').eq('slug', params.slug).single(),
-    supabase.from('deployments').select('*').eq('id', params.id).single(),
-    supabase.from('deployment_tasks').select('*').eq('deployment_id', params.id).order('sort_order'),
-  ]);
-  if (!product || !deployment) notFound();
+  const cookieStore = await cookies();
+  const token = cookieStore.get('auth_token')?.value;
+  if (!token) redirect('/auth/login');
 
-  const phases = [...new Set((tasks ?? []).map(t => t.phase).filter(Boolean))];
-  const byPhase = (phase: string) => (tasks ?? []).filter(t => t.phase === phase);
+  const decoded = verifyToken(token);
+  if (!decoded) redirect('/auth/login');
 
-  const done = (tasks ?? []).filter(t => t.status === 'done').length;
-  const total = (tasks ?? []).length;
-  const pct = total ? Math.round((done / total) * 100) : 0;
+  try {
+    const [productResult, deploymentResult, tasksResult] = await Promise.all([
+      query('SELECT * FROM products WHERE slug = $1', [params.slug]),
+      query('SELECT * FROM deployments WHERE id = $1', [params.id]),
+      query('SELECT * FROM deployment_tasks WHERE deployment_id = $1 ORDER BY sort_order', [params.id]),
+    ]);
 
-  return (
+    const product = productResult.rows[0];
+    const deployment = deploymentResult.rows[0];
+    const tasks: Array<any> = tasksResult.rows;
+
+    if (!product || !deployment) notFound();
+
+    const phases = [...new Set((tasks ?? []).map(t => t.phase).filter(Boolean))];
+    const byPhase = (phase: string) => (tasks ?? []).filter(t => t.phase === phase);
+
+    const done = (tasks ?? []).filter(t => t.status === 'done').length;
+    const total = (tasks ?? []).length;
+    const pct = total ? Math.round((done / total) * 100) : 0;
+
+    return (
     <div className="p-8 max-w-5xl mx-auto">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
@@ -119,5 +133,8 @@ export default async function DeploymentDetailPage({ params }: { params: { slug:
         );
       })}
     </div>
-  );
+    );
+  } catch (err) {
+    return <div className="p-8 text-center text-red-600">Error loading deployment details</div>;
+  }
 }

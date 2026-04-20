@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase';
+import { createTicket } from '@/app/actions/tickets';
 
 interface Props {
   products: { id: string; name: string; icon: string }[];
@@ -18,28 +18,31 @@ export default function NewTicketButton({ products, engineers, userId, userRole 
   });
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
 
   function upd(k: string, v: string) { setForm(f => ({ ...f, [k]: v })); }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    await supabase.from('tickets').insert({
-      title: form.title,
-      description: form.description || null,
-      type: form.type,
-      priority: form.priority,
-      product_id: form.product_id,
-      assignee_id: form.assignee_id || null,
-      due_date: form.due_date || null,
-      reporter_id: userId,
-      status: 'open',
-    });
-    setLoading(false);
-    setOpen(false);
-    setForm(f => ({ ...f, title: '', description: '', assignee_id: '', due_date: '' }));
-    router.refresh();
+    try {
+      await createTicket({
+        title: form.title,
+        description: form.description || undefined,
+        type: form.type,
+        priority: form.priority,
+        product_id: form.product_id,
+        assignee_id: form.assignee_id || undefined,
+        due_date: form.due_date || undefined,
+        reporter_id: userId,
+      });
+      setLoading(false);
+      setOpen(false);
+      setForm(f => ({ ...f, title: '', description: '', assignee_id: '', due_date: '' }));
+      router.refresh();
+    } catch (error) {
+      console.error('Failed to create ticket:', error);
+      setLoading(false);
+    }
   }
 
   return (

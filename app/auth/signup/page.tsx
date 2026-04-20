@@ -4,14 +4,12 @@ export const dynamic = 'force-dynamic';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase';
 import { ROLE_LABELS } from '@/lib/types';
 
 const roles = Object.entries(ROLE_LABELS) as [string, string][];
 
 export default function SignupPage() {
   const router = useRouter();
-  const supabase = createClient();
   const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '', role: 'engineer' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -21,28 +19,50 @@ export default function SignupPage() {
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    
     if (!form.email.endsWith('@tneuralai.com')) {
       setError('Only @tneuralai.com email addresses can register.');
       return;
     }
-    if (form.password !== form.confirm) { setError('Passwords do not match.'); return; }
-    if (form.password.length < 8) { setError('Password must be at least 8 characters.'); return; }
+    
+    if (form.password !== form.confirm) {
+      setError('Passwords do not match.');
+      return;
+    }
+    
+    if (form.password.length < 8) {
+      setError('Password must be at least 8 characters.');
+      return;
+    }
 
     setLoading(true);
-    const { error: signupErr } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.password,
-      options: { data: { full_name: form.name } },
-    });
-    if (signupErr) { setError(signupErr.message); setLoading(false); return; }
+    try {
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: form.email,
+          password: form.password,
+          full_name: form.name,
+          role: form.role,
+        }),
+      });
 
-    // Update role in profiles (trigger creates the profile record)
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      await supabase.from('profiles').update({ role: form.role, full_name: form.name }).eq('id', user.id);
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Signup failed');
+        setLoading(false);
+        return;
+      }
+
+      // Token is automatically set as httpOnly cookie by the API
+      router.push('/dashboard');
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      setLoading(false);
     }
-    router.push('/dashboard');
-    router.refresh();
   }
 
   return (

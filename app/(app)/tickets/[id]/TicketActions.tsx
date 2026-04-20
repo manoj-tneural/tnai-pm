@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase';
+import { updateTicket } from '@/app/actions/tickets';
 
 interface Props {
   ticketId: string;
@@ -18,19 +18,22 @@ export default function TicketActions({ ticketId, currentStatus, currentAssignee
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
 
   async function save() {
     setLoading(true);
-    await supabase.from('tickets').update({
-      status,
-      assignee_id: assignee || null,
-      updated_at: new Date().toISOString(),
-    }).eq('id', ticketId);
-    setLoading(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-    router.refresh();
+    try {
+      await updateTicket(ticketId, {
+        status: status !== currentStatus ? status : undefined,
+        assignee_id: assignee !== (currentAssignee ?? '') ? assignee || null : undefined,
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+      router.refresh();
+    } catch (error) {
+      console.error('Failed to update ticket:', error);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (

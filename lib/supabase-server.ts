@@ -1,21 +1,6 @@
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+// This file has been deprecated in favor of custom JWT + PostgreSQL authentication
+// See CUSTOM_AUTH_README.md for details
 
 export function createServerSupabaseClient() {
-  const cookieStore = cookies();
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) { return cookieStore.get(name)?.value; },
-        set(name: string, value: string, options: Record<string, unknown>) {
-          try { cookieStore.set({ name, value, ...options }); } catch {}
-        },
-        remove(name: string, options: Record<string, unknown>) {
-          try { cookieStore.set({ name, value: '', ...options }); } catch {}
-        },
-      },
-    }
-  );
+  throw new Error('Supabase server client has been removed. Use /api/* endpoints with custom auth instead.');
 }

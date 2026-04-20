@@ -1,26 +1,39 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
-import { createServerSupabaseClient } from '@/lib/supabase-server';
+import { cookies } from 'next/headers';
+import { verifyToken } from '@/lib/auth-jwt';
+import { query } from '@/lib/db';
 import { STATUS_COLORS } from '@/lib/types';
 import clsx from 'clsx';
 import NewDeploymentButton from './NewDeploymentButton';
 
 export default async function DeploymentsPage({ params }: { params: { slug: string } }) {
-  const supabase = createServerSupabaseClient();
-  const { data: product } = await supabase.from('products').select('*').eq('slug', params.slug).single();
-  if (!product) notFound();
+  const cookieStore = await cookies();
+  const token = cookieStore.get('auth_token')?.value;
+  if (!token) redirect('/auth/login');
 
-  const { data: deployments } = await supabase
-    .from('deployments').select('*').eq('product_id', product.id).order('created_at', { ascending: false });
+  const decoded = verifyToken(token);
+  if (!decoded) redirect('/auth/login');
 
-  const stats = {
-    total: deployments?.length ?? 0,
-    planning: deployments?.filter(d => d.status === 'planning').length ?? 0,
-    active: deployments?.filter(d => d.status === 'in_progress').length ?? 0,
-    done: deployments?.filter(d => d.status === 'completed').length ?? 0,
-  };
+  try {
+    const productResult = await query('SELECT * FROM products WHERE slug = $1', [params.slug]);
+    const product = productResult.rows[0];
+    if (!product) notFound();
 
-  return (
+    const deploymentsResult = await query(
+      'SELECT * FROM deployments WHERE product_id = $1 ORDER BY created_at DESC',
+      [product.id]
+    );
+    const deployments: Array<any> = deploymentsResult.rows;
+
+    const stats = {
+      total: deployments?.length ?? 0,
+      planning: deployments?.filter(d => d.status === 'planning').length ?? 0,
+      active: deployments?.filter(d => d.status === 'in_progress').length ?? 0,
+      done: deployments?.filter(d => d.status === 'completed').length ?? 0,
+    };
+
+    return (
     <div className="p-8 max-w-6xl mx-auto">
       <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
         <Link href="/dashboard" className="hover:text-blue-600">Home</Link>
@@ -85,5 +98,8 @@ export default async function DeploymentsPage({ params }: { params: { slug: stri
         </div>
       )}
     </div>
-  );
+    );
+  } catch (err) {
+    return <div className="p-8 text-center text-red-600">Error loading deployments</div>;
+  }
 }

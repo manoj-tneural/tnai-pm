@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase';
+import { saveDailyLog } from '@/app/actions/products';
 
 interface Props {
   productId: string;
@@ -19,31 +19,28 @@ export default function DailyLogForm({ productId, userId, existingLog, today }: 
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    if (existingLog) {
-      await supabase.from('daily_logs').update({
-        yesterday: form.yesterday || null,
-        today: form.today || null,
-        blockers: form.blockers || null,
-      }).eq('id', existingLog.id);
-    } else {
-      await supabase.from('daily_logs').insert({
-        user_id: userId,
+    try {
+      await saveDailyLog({
         product_id: productId,
+        user_id: userId,
         log_date: today,
-        yesterday: form.yesterday || null,
-        today: form.today || null,
-        blockers: form.blockers || null,
+        yesterday: form.yesterday || undefined,
+        today: form.today || undefined,
+        blockers: form.blockers || undefined,
+        id: existingLog?.id,
       });
+      setLoading(false);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+      router.refresh();
+    } catch (error) {
+      console.error('Failed to save log:', error);
+      setLoading(false);
     }
-    setLoading(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-    router.refresh();
   }
 
   return (

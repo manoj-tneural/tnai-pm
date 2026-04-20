@@ -1,16 +1,27 @@
 import { redirect } from 'next/navigation';
-import { createServerSupabaseClient } from '@/lib/supabase-server';
+import { cookies } from 'next/headers';
+import { verifyToken } from '@/lib/auth-jwt';
+import { query } from '@/lib/db';
 import { ROLE_LABELS, ROLE_COLORS } from '@/lib/types';
 import clsx from 'clsx';
 import RoleChanger from './RoleChanger';
 
 export default async function AdminPage() {
-  const supabase = createServerSupabaseClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user!.id).single();
-  if (profile?.role !== 'management') redirect('/dashboard');
+  const cookieStore = await cookies();
+  const token = cookieStore.get('auth_token')?.value;
+  const decoded = token ? verifyToken(token) : null;
 
-  const { data: users } = await supabase.from('profiles').select('*').order('created_at');
+  if (!decoded) redirect('/auth/login');
+
+  // Fetch current user
+  const userResult = await query('SELECT * FROM profiles WHERE id = $1', [decoded.userId]);
+  const user = userResult.rows[0];
+
+  if (user?.role !== 'management') redirect('/dashboard');
+
+  // Fetch all users
+  const usersResult = await query('SELECT * FROM profiles ORDER BY created_at DESC');
+  const users: Array<any> = usersResult.rows;
 
   return (
     <div className="p-8 max-w-5xl mx-auto">
@@ -38,7 +49,7 @@ export default async function AdminPage() {
                       {(u.full_name ?? u.email)[0].toUpperCase()}
                     </div>
                     <span className="font-medium text-gray-900">{u.full_name ?? '—'}</span>
-                    {u.id === user!.id && <span className="text-xs text-blue-500">(you)</span>}
+                    {u.id === user?.id && <span className="text-xs text-blue-500">(you)</span>}
                   </div>
                 </td>
                 <td className="px-4 py-3 text-gray-500">{u.email}</td>
@@ -54,7 +65,7 @@ export default async function AdminPage() {
                 </td>
                 <td className="px-4 py-3 text-gray-400 text-xs">{u.created_at.split('T')[0]}</td>
                 <td className="px-4 py-3">
-                  {u.id !== user!.id && <RoleChanger userId={u.id} currentRole={u.role} />}
+                  {u.id !== user?.id && <RoleChanger userId={u.id} currentRole={u.role} />}
                 </td>
               </tr>
             ))}

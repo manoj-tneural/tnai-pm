@@ -1,21 +1,40 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase';
 import { ROLE_LABELS } from '@/lib/types';
 
 export default function RoleChanger({ userId, currentRole }: { userId: string; currentRole: string }) {
   const [role, setRole] = useState(currentRole);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
 
   async function change(newRole: string) {
+    // Optimistic UI update
     setRole(newRole);
     setLoading(true);
-    await supabase.from('profiles').update({ role: newRole }).eq('id', userId);
-    setLoading(false);
-    router.refresh();
+    
+    try {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: newRole }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Failed to update role:', errorData);
+        setRole(currentRole); // Revert on error
+        alert(errorData.error || 'Failed to update role');
+      } else {
+        router.refresh();
+      }
+    } catch (err) {
+      console.error('Error:', err);
+      setRole(currentRole); // Revert on error
+      alert('Failed to update role');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
