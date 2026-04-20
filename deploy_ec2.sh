@@ -2,7 +2,8 @@
 
 ###############################################################################
 # TNAI-PM EC2 Deployment Script
-# Automates: Node.js, PostgreSQL, Nginx, PM2, SSL setup
+# Automates: System updates, Node.js 20, PostgreSQL 15, Nginx, PM2, SSL setup
+# Database: Auto-installs PostgreSQL with user tnai_user (password: tneural123)
 # Usage: ./deploy_ec2.sh
 ###############################################################################
 
@@ -41,14 +42,53 @@ npm install -g pm2
 pm2 completion install
 echo -e "${GREEN}✓ Nginx and PM2 installed${NC}\n"
 
-# ==================== STEP 4: CLONE & SETUP APP ====================
-echo -e "${YELLOW}[STEP 4/6] Cloning TNAI-PM repository...${NC}"
+# ==================== STEP 4: INSTALL POSTGRESQL ====================
+echo -e "${YELLOW}[STEP 4/7] Installing PostgreSQL 15...${NC}"
+
+# Check if PostgreSQL is already installed
+if command -v psql &> /dev/null; then
+    echo "✓ PostgreSQL already installed"
+else
+    # Add PostgreSQL repository
+    sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+    
+    # Install PostgreSQL
+    sudo apt update
+    sudo apt install -y postgresql postgresql-contrib postgresql-client
+fi
+
+# Start PostgreSQL and enable at boot
+sudo systemctl start postgresql
+sudo systemctl enable postgresql
+
+# Create database user and database
+echo "Creating PostgreSQL user and database..."
+sudo -u postgres psql << EOSQL
+CREATE USER tnai_user WITH PASSWORD 'tneural123';
+ALTER USER tnai_user CREATEDB;
+DROP DATABASE IF EXISTS tnai_pm;
+CREATE DATABASE tnai_pm OWNER tnai_user;
+EOSQL
+
+# Enable remote access to PostgreSQL (optional, for external connections)
+sudo sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/" /etc/postgresql/*/main/postgresql.conf 2>/dev/null || true
+echo "host  tnai_pm  tnai_user  0.0.0.0/0  md5" | sudo tee -a /etc/postgresql/*/main/pg_hba.conf > /dev/null 2>&1
+sudo systemctl restart postgresql
+
+# Verify PostgreSQL is running
+psql -h localhost -U tnai_user -d tnai_pm -c "SELECT 1;" > /dev/null 2>&1 && echo "✓ PostgreSQL verified" || echo "⚠️  PostgreSQL test failed"
+
+echo -e "${GREEN}✓ PostgreSQL installed and configured${NC}\n"
+
+# ==================== STEP 5: CLONE & SETUP APP ====================
+echo -e "${YELLOW}[STEP 5/7] Cloning TNAI-PM repository...${NC}"
 cd ~
 
 # Check if repo already exists
 if [ ! -d "tnai-pm" ]; then
     # Prompt for GitHub repository URL
-    read -p "Enter your GitHub repository URL (e.g., https://github.com/yourname/tnai-pm): " REPO_URL
+    read -p "Enter your GitHub repository URL (e.g., https://github.com/manoj-tneural/tnai-pm): " REPO_URL
     git clone $REPO_URL tnai-pm
 else
     echo "Repository already exists, pulling latest changes..."
@@ -69,29 +109,20 @@ npm run build
 
 echo -e "${GREEN}✓ App cloned and built${NC}\n"
 
-# ==================== STEP 5: SETUP ENVIRONMENT ====================
-echo -e "${YELLOW}[STEP 5/6] Setting up environment...${NC}"
+# ==================== STEP 6: SETUP ENVIRONMENT ====================
+echo -e "${YELLOW}[STEP 6/7] Setting up environment...${NC}"
 
 # Check if .env.production exists
 if [ ! -f ".env.production" ]; then
     echo -e "${YELLOW}Creating .env.production file...${NC}"
-    echo ""
-    echo "⚠️  You need to provide your database credentials."
-    echo ""
-    read -p "Enter your PostgreSQL host (RDS endpoint or localhost): " DB_HOST
-    read -p "Enter database name [default: tnai_pm]: " DB_NAME
-    DB_NAME=${DB_NAME:-tnai_pm}
-    read -p "Enter database user [default: tnai_user]: " DB_USER
-    DB_USER=${DB_USER:-tnai_user}
-    read -sp "Enter database password: " DB_PASS
     echo ""
     
     # Get EC2 public IP
     EC2_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
     
     cat > .env.production << EOF
-# Database
-DATABASE_URL=postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:5432/${DB_NAME}
+# Database (PostgreSQL on this EC2 instance)
+DATABASE_URL=postgresql://tnai_user:tneural123@localhost:5432/tnai_pm
 
 # Supabase compatibility (dummy values for auth system)
 NEXT_PUBLIC_SUPABASE_URL=http://${EC2_IP}
@@ -109,11 +140,20 @@ else
 fi
 echo ""
 
-# ==================== STEP 6: START APP WITH PM2 ====================
-echo -e "${YELLOW}[STEP 6/6] Starting app with PM2...${NC}"
+# ==================== STEP 7: START APP WITH PM2 ====================
+echo -e "${YELLOW}[STEP 7/7] Starting app with PM2...${NC}"
 
 # Kill existing PM2 process if any
 pm2 delete tnai-pm 2>/dev/null || true
+
+# Run database migrations
+echo "Running database migrations..."
+if [ -f "supabase/migrations/001_init.sql" ]; then
+    PGPASSWORD=tneural123 psql -h localhost -U tnai_user -d tnai_pm -f supabase/migrations/001_init.sql > /dev/null 2>&1 && echo "✓ Database migrations completed" || echo "⚠️  Some migrations may have failed (this is OK if tables already exist)"
+else
+    echo "⚠️  Migration file not found (supabase/migrations/001_init.sql)"
+fi
+echo ""
 
 # Start the app
 pm2 start npm --name "tnai-pm" -- start
