@@ -93,7 +93,7 @@ if [ ! -d "tnai-pm" ]; then
 else
     echo "Repository already exists, pulling latest changes..."
     cd tnai-pm
-    git pull origin main
+    git pull origin master
     cd ~
 fi
 
