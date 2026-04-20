@@ -147,7 +147,7 @@ if command -v postgrest &> /dev/null; then
 db-uri = "postgresql://tnai_user:tneural123@localhost:5432/tnai_pm"
 db-schema = "public"
 db-anon-role = "tnai_user"
-server-host = "127.0.0.1"
+server-host = "0.0.0.0"
 server-port = 3001
 jwt-secret = "change-this-secret-key-to-something-random"
 EOF
