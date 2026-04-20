@@ -114,14 +114,14 @@ cat > .env.production << EOF
 # Database (PostgreSQL on this EC2 instance)
 DATABASE_URL=postgresql://tnai_user:tneural123@localhost:5432/tnai_pm
 
-# Supabase compatibility (dummy values for auth system)
-NEXT_PUBLIC_SUPABASE_URL=http://${EC2_IP}
+# Supabase compatibility (dummy values - auth pages use force-dynamic)
+NEXT_PUBLIC_SUPABASE_URL=https://dummy.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=pk_live_dummy_key_for_local_auth
 SUPABASE_SERVICE_ROLE_KEY=sbprivate_dummy_key_for_local_auth
 
 # Next.js production settings
 NODE_ENV=production
-NEXT_PUBLIC_APP_URL=http://${EC2_IP}
+NEXT_PUBLIC_APP_URL=https://${EC2_IP}
 EOF
 
 echo -e "${GREEN}✓ .env.production created${NC}\n"
