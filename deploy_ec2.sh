@@ -81,123 +81,6 @@ psql -h localhost -U tnai_user -d tnai_pm -c "SELECT 1;" > /dev/null 2>&1 && ech
 
 echo -e "${GREEN}✓ PostgreSQL installed and configured${NC}\n"
 
-# ==================== STEP 4B: INSTALL POSTGREST (REST API) ====================
-echo -e "${YELLOW}[STEP 4B/7] Installing PostgREST for REST API...${NC}"
-
-# Check if PostgREST is already installed
-if ! command -v postgrest &> /dev/null; then
-    # Install required dependencies
-    echo "Installing dependencies for PostgREST..."
-    sudo apt install -y xz-utils curl wget > /dev/null 2>&1
-    
-    # Get latest PostgREST version
-    echo "Fetching latest PostgREST version..."
-    POSTGREST_VERSION=$(curl -s https://api.github.com/repos/PostgREST/postgrest/releases/latest | grep -oP '"tag_name": "v\K[^"]+')
-    
-    if [ -z "$POSTGREST_VERSION" ]; then
-        echo "⚠️  Could not fetch PostgREST version, using v12.0.1..."
-        POSTGREST_VERSION="12.0.1"
-    fi
-    
-    POSTGREST_URL="https://github.com/PostgREST/postgrest/releases/download/v${POSTGREST_VERSION}/postgrest-v${POSTGREST_VERSION}-linux-x64.tar.xz"
-    
-    echo "Downloading PostgREST v${POSTGREST_VERSION}..."
-    cd /tmp
-    
-    # Download with error checking
-    if wget -q "$POSTGREST_URL" -O postgrest.tar.xz 2>/dev/null; then
-        echo "✓ Download successful"
-    else
-        echo "⚠️  Download failed, skipping PostgREST installation"
-        cd ~
-        # Continue without PostgREST
-        POSTGREST_FAILED=1
-    fi
-    
-    # Extract if download succeeded
-    if [ -z "$POSTGREST_FAILED" ] && [ -f "postgrest.tar.xz" ]; then
-        echo "Extracting PostgREST..."
-        if tar xf postgrest.tar.xz 2>/dev/null; then
-            if [ -f "postgrest" ]; then
-                sudo mv postgrest /usr/local/bin/postgrest
-                sudo chmod +x /usr/local/bin/postgrest
-                rm -f postgrest.tar.xz
-                echo "✓ PostgREST installed successfully"
-            else
-                echo "⚠️  PostgREST binary not found in archive"
-                POSTGREST_FAILED=1
-            fi
-        else
-            echo "⚠️  Failed to extract PostgREST"
-            POSTGREST_FAILED=1
-        fi
-    fi
-    
-    cd ~
-else
-    echo "✓ PostgREST already installed"
-fi
-
-# Only configure PostgREST service if installation succeeded
-if command -v postgrest &> /dev/null; then
-    # Create PostgREST configuration file
-    echo "Configuring PostgREST..."
-    sudo mkdir -p /etc/postgrest
-    sudo tee /etc/postgrest/postgrest.conf > /dev/null << 'EOF'
-db-uri = "postgresql://tnai_user:tneural123@localhost:5432/tnai_pm"
-db-schema = "public"
-db-anon-role = "tnai_user"
-server-host = "0.0.0.0"
-server-port = 3001
-jwt-secret = "change-this-secret-key-to-something-random"
-EOF
-
-    # Create PostgREST systemd service
-    sudo tee /etc/systemd/system/postgrest.service > /dev/null << 'EOF'
-[Unit]
-Description=PostgREST API Server
-After=postgresql.service
-StartLimitIntervalSec=60
-StartLimitBurst=3
-
-[Service]
-Type=simple
-User=ubuntu
-WorkingDirectory=/home/ubuntu
-ExecStart=/usr/local/bin/postgrest /etc/postgrest/postgrest.conf
-Restart=on-failure
-RestartSec=10
-StandardOutput=append:/var/log/postgrest.log
-StandardError=append:/var/log/postgrest.log
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-    # Enable and start PostgREST
-    sudo systemctl daemon-reload
-    sudo systemctl enable postgrest.service
-    sudo systemctl start postgrest.service
-
-    # Wait a moment for PostgREST to start
-    sleep 3
-
-    # Verify PostgREST is running
-    if curl -s http://localhost:3001 > /dev/null 2>&1; then
-        echo -e "${GREEN}✓ PostgREST installed and running on port 3001${NC}"
-    else
-        echo -e "${YELLOW}⚠️  PostgREST service started but not responding yet. It may take a moment to initialize.${NC}"
-        echo "    Check status with: sudo systemctl status postgrest"
-        echo "    View logs with: sudo tail -f /var/log/postgrest.log"
-    fi
-else
-    echo -e "${YELLOW}⚠️  PostgREST installation skipped. You can install it manually later or use Supabase.${NC}"
-    echo "    To install later: sudo apt install -y xz-utils && curl -L https://github.com/PostgREST/postgrest/releases/download/v12.0.1/postgrest-v12.0.1-linux-x64.tar.xz | tar xJ && sudo mv postgrest /usr/local/bin/"
-fi
-
-
-echo ""
-
 # ==================== STEP 5: CLONE & SETUP APP ====================
 echo -e "${YELLOW}[STEP 5/7] Cloning TNAI-PM repository...${NC}"
 cd ~
@@ -226,22 +109,29 @@ echo -e "${YELLOW}[STEP 6/7] Setting up environment...${NC}"
 # Get EC2 public IP
 EC2_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
 
-# Create .env.production with local PostgREST configuration
+# Create .env.production
 cat > .env.production << EOF
 # Database (PostgreSQL on this EC2 instance)
 DATABASE_URL=postgresql://tnai_user:tneural123@localhost:5432/tnai_pm
 
-# PostgREST (Local REST API - replaces Supabase)
-NEXT_PUBLIC_SUPABASE_URL=http://localhost:3001
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvY2FsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDAwMDAwMDAsImV4cCI6MTg2NzU2NjQwMH0.dummytoken
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvY2FsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcwMDAwMDAwMCwiZXhwIjoxODY3NTY2NDAwfQ.dummytoken
+# For now, use Supabase for auth (free tier - no credit card needed)
+# Your local PostgreSQL is set up - you can migrate auth to PostgREST later
+# Get these from: https://supabase.com/dashboard/project/_/settings/api
+NEXT_PUBLIC_SUPABASE_URL=https://your-supabase-url.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-key
 
 # Next.js production settings
 NODE_ENV=production
-NEXT_PUBLIC_APP_URL=https://${EC2_IP}
+NEXT_PUBLIC_APP_URL=http://${EC2_IP}
 EOF
 
-echo -e "${GREEN}✓ .env.production created${NC}\n"
+echo -e "${YELLOW}⚠️  Please update .env.production with your Supabase credentials:${NC}"
+echo "   1. Go to https://supabase.com/dashboard/project/_/settings/api"
+echo "   2. Copy your Project URL and API keys"
+echo "   3. Update: sudo nano .env.production"
+echo "   4. After updating, restart: pm2 reload tnai-pm"
+echo ""
 
 # Build Next.js app (now that env vars are set)
 echo "Building Next.js app..."
