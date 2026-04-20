@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // List of public routes that don't require authentication
-// NOTE: /dashboard is temporarily added for debugging - remove this once dashboard is fixed!
-const publicRoutes = ['/auth/login', '/auth/signup', '/api/auth/login', '/api/auth/signup', '/dashboard'];
+// NOTE: /dashboard and /test are temporarily added for debugging - remove these once dashboard is fixed!
+const publicRoutes = ['/auth/login', '/auth/signup', '/api/auth/login', '/api/auth/signup', '/dashboard', '/test'];
 
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
