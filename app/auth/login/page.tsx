@@ -15,48 +15,37 @@ export default function LoginPage() {
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setError('');
-    
-    if (!email.endsWith('@tneuralai.com')) {
-      setError('Only @tneuralai.com email addresses are allowed.');
-      return;
-    }
-    
     setLoading(true);
+    
     try {
-      console.log('Attempting login with:', email);
+      console.log('[Login Form] Submitting with email:', email);
       
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
-        credentials: 'include', // Important: include cookies
+        credentials: 'include',
       });
 
-      console.log('Login response status:', response.status);
+      console.log('[Login Form] Fetch completed, status:', response.status);
       const data = await response.json();
-      console.log('Login response data:', data);
+      console.log('[Login Form] Response body:', data);
 
       if (!response.ok) {
+        console.log('[Login Form] Response not OK, showing error');
         setError(data.error || 'Login failed');
         setLoading(false);
         return;
       }
 
-      // Token is automatically set as httpOnly cookie by the API
-      console.log('Login successful, redirecting to /dashboard...');
+      console.log('[Login Form] Login successful, attempting redirect');
+      console.log('[Login Form] Using window.location.href to /dashboard');
       
-      // Wait a moment to ensure cookie is set before redirecting
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      router.push('/dashboard');
-      
-      // Also try a full page reload as fallback
-      setTimeout(() => {
-        window.location.href = '/dashboard';
-      }, 500);
+      // Use simple redirect first
+      window.location.href = '/dashboard';
     } catch (err) {
       const message = err instanceof Error ? err.message : 'An error occurred';
-      console.error('Login error:', message);
+      console.error('[Login Form] Catch error:', message, err);
       setError(message);
       setLoading(false);
     }
