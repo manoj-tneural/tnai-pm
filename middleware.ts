@@ -1,61 +1,60 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth-jwt';
+import jwt from 'jsonwebtoken';
 
 // List of public routes that don't require authentication
-const publicRoutes = ['/auth/login', '/auth/signup'];
+const publicRoutes = ['/auth/login', '/auth/signup', '/api/auth/login', '/api/auth/signup'];
+
+// Inline JWT verification for middleware to avoid import issues
+function verifyTokenInMiddleware(token: string): boolean {
+  try {
+    const secret = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+    jwt.verify(token, secret);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  // Allow public routes
+  // Allow public routes and static assets
   if (publicRoutes.some((route) => pathname.startsWith(route))) {
-    // Redirect to dashboard if already logged in
-    const token = request.cookies.get('auth_token')?.value;
-    if (token && verifyToken(token)) {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
-    }
     return NextResponse.next();
   }
 
-  // Protect /api/auth routes
-  if (pathname.startsWith('/api/auth')) {
-    // Allow login and signup endpoints without cookies
-    if (pathname.endsWith('/login') || pathname.endsWith('/signup')) {
-      return NextResponse.next();
-    }
-    // Require auth for other /api/auth routes (like logout)
-    const token = request.cookies.get('auth_token')?.value;
-    if (!token || !verifyToken(token)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    return NextResponse.next();
+  // For all other routes, require authentication
+  const token = request.cookies.get('auth_token')?.value;
+
+  if (!token) {
+    // No token, redirect to login
+    console.log(`[Middleware] No token found for ${pathname}, redirecting to login`);
+    return NextResponse.redirect(new URL('/auth/login', request.url));
   }
 
-  // Protect app routes - require authentication
-  if (pathname.startsWith('/')) {
-    const token = request.cookies.get('auth_token')?.value;
-    
-    if (!token) {
-      return NextResponse.redirect(new URL('/auth/login', request.url));
-    }
-
-    // Verify token validity
-    const decoded = verifyToken(token);
-    if (!decoded) {
-      // Token is invalid or expired
-      const response = NextResponse.redirect(new URL('/auth/login', request.url));
-      response.cookies.delete('auth_token');
-      return response;
-    }
+  // Verify token validity
+  if (!verifyTokenInMiddleware(token)) {
+    // Token is invalid or expired
+    console.log(`[Middleware] Invalid token for ${pathname}, redirecting to login`);
+    const response = NextResponse.redirect(new URL('/auth/login', request.url));
+    response.cookies.delete('auth_token');
+    return response;
   }
 
+  // Token is valid, allow the request
   return NextResponse.next();
 }
 
 // Configure which routes to apply middleware to
 export const config = {
   matcher: [
-    // Protect all app routes except public ones
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api/auth (auth routes don't redirect, they respond)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!api/auth|_next/static|_next/image|favicon.ico).*)',
   ],
 };
