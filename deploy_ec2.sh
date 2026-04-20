@@ -81,6 +81,77 @@ psql -h localhost -U tnai_user -d tnai_pm -c "SELECT 1;" > /dev/null 2>&1 && ech
 
 echo -e "${GREEN}✓ PostgreSQL installed and configured${NC}\n"
 
+# ==================== STEP 4B: INSTALL POSTGREST (REST API) ====================
+echo -e "${YELLOW}[STEP 4B/7] Installing PostgREST for REST API...${NC}"
+
+# Check if PostgREST is already installed
+if ! command -v postgrest &> /dev/null; then
+    # Install PostgREST (latest release from GitHub)
+    POSTGREST_VERSION=$(curl -s https://api.github.com/repos/PostgREST/postgrest/releases/latest | grep -oP '"tag_name": "\K[^"]+')
+    POSTGREST_URL="https://github.com/PostgREST/postgrest/releases/download/${POSTGREST_VERSION}/postgrest-${POSTGREST_VERSION}-linux-x64.tar.xz"
+    
+    echo "Downloading PostgREST ${POSTGREST_VERSION}..."
+    cd /tmp
+    wget -q $POSTGREST_URL -O postgrest.tar.xz
+    tar xf postgrest.tar.xz
+    sudo mv postgrest /usr/local/bin/
+    chmod +x /usr/local/bin/postgrest
+    rm postgrest.tar.xz
+    cd ~
+fi
+
+# Create PostgREST configuration file
+echo "Configuring PostgREST..."
+sudo mkdir -p /etc/postgrest
+sudo tee /etc/postgrest/postgrest.conf > /dev/null << 'EOF'
+db-uri = "postgresql://tnai_user:tneural123@localhost:5432/tnai_pm"
+db-schema = "public"
+db-anon-role = "tnai_user"
+server-host = "127.0.0.1"
+server-port = 3001
+jwt-secret = "change-this-secret-key-to-something-random"
+EOF
+
+# Create PostgREST systemd service
+sudo tee /etc/systemd/system/postgrest.service > /dev/null << 'EOF'
+[Unit]
+Description=PostgREST API Server
+After=postgresql.service
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu
+ExecStart=/usr/local/bin/postgrest /etc/postgrest/postgrest.conf
+Restart=on-failure
+RestartSec=10
+
+StandardOutput=append:/var/log/postgrest.log
+StandardError=append:/var/log/postgrest.log
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Enable and start PostgREST
+sudo systemctl daemon-reload
+sudo systemctl enable postgrest.service
+sudo systemctl start postgrest.service
+
+# Wait a moment for PostgREST to start
+sleep 2
+
+# Verify PostgREST is running
+if curl -s http://localhost:3001 > /dev/null 2>&1; then
+    echo -e "${GREEN}✓ PostgREST installed and running on port 3001${NC}"
+else
+    echo -e "${YELLOW}⚠️  PostgREST may not be responding yet, continuing...${NC}"
+fi
+
+echo ""
+
 # ==================== STEP 5: CLONE & SETUP APP ====================
 echo -e "${YELLOW}[STEP 5/7] Cloning TNAI-PM repository...${NC}"
 cd ~
@@ -109,15 +180,15 @@ echo -e "${YELLOW}[STEP 6/7] Setting up environment...${NC}"
 # Get EC2 public IP
 EC2_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
 
-# Create .env.production with dummy Supabase values for build
+# Create .env.production with local PostgREST configuration
 cat > .env.production << EOF
 # Database (PostgreSQL on this EC2 instance)
 DATABASE_URL=postgresql://tnai_user:tneural123@localhost:5432/tnai_pm
 
-# Supabase compatibility (dummy values - auth pages use force-dynamic)
-NEXT_PUBLIC_SUPABASE_URL=https://dummy.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=pk_live_dummy_key_for_local_auth
-SUPABASE_SERVICE_ROLE_KEY=sbprivate_dummy_key_for_local_auth
+# PostgREST (Local REST API - replaces Supabase)
+NEXT_PUBLIC_SUPABASE_URL=http://localhost:3001
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvY2FsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDAwMDAwMDAsImV4cCI6MTg2NzU2NjQwMH0.dummytoken
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvY2FsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcwMDAwMDAwMCwiZXhwIjoxODY3NTY2NDAwfQ.dummytoken
 
 # Next.js production settings
 NODE_ENV=production
