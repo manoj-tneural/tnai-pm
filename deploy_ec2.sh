@@ -38,8 +38,8 @@ sudo apt install -y nginx
 sudo systemctl start nginx
 sudo systemctl enable nginx
 
-npm install -g pm2
-pm2 completion install
+sudo npm install -g pm2
+sudo pm2 completion install
 echo -e "${GREEN}✓ Nginx and PM2 installed${NC}\n"
 
 # ==================== STEP 4: INSTALL POSTGRESQL ====================
