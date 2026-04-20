@@ -9,14 +9,17 @@ export default async function GlobalDailyPage() {
 
   if (!token) redirect('/auth/login');
 
-  // Fetch products and daily logs
-  const [productsResult, logsResult] = await Promise.all([
+  // Fetch products, daily logs, and current user profile
+  const [productsResult, logsResult, profileResult] = await Promise.all([
     query('SELECT id, name, icon, slug, color FROM products'),
     query('SELECT dl.*, p.full_name, p.role, pr.name, pr.icon, pr.slug, pr.color FROM daily_logs dl JOIN profiles p ON dl.user_id = p.id JOIN products pr ON dl.product_id = pr.id ORDER BY log_date DESC LIMIT 100'),
+    query('SELECT id FROM profiles LIMIT 1'),
   ]);
 
   const products: Array<any> = productsResult.rows;
   const logs: Array<any> = logsResult.rows;
+  const profile = profileResult.rows[0];
+  const userId = profile?.id;
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -29,7 +32,7 @@ export default async function GlobalDailyPage() {
   const dates = Object.keys(byDate).sort().reverse();
 
   // My pending products (no log today)
-  const myLogsToday = (logs ?? []).filter(l => l.user_id === decoded.userId && l.log_date === today);
+  const myLogsToday = (logs ?? []).filter(l => l.user_id === userId && l.log_date === today);
   const myLoggedProducts = myLogsToday.map(l => l.product_id);
   const pendingProducts = (products ?? []).filter(p => !myLoggedProducts.includes(p.id));
 
