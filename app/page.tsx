@@ -9,5 +9,5 @@ export default async function RootPage() {
   if (token && verifyToken(token)) {
     redirect('/dashboard');
   }
-  redirect('/auth/login');
+  redirect('/login');
 }
