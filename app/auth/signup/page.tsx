@@ -37,6 +37,8 @@ export default function SignupPage() {
 
     setLoading(true);
     try {
+      console.log('Attempting signup with:', form.email);
+      
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -46,9 +48,12 @@ export default function SignupPage() {
           full_name: form.name,
           role: form.role,
         }),
+        credentials: 'include', // Important: include cookies
       });
 
+      console.log('Signup response status:', response.status);
       const data = await response.json();
+      console.log('Signup response data:', data);
 
       if (!response.ok) {
         setError(data.error || 'Signup failed');
@@ -57,10 +62,21 @@ export default function SignupPage() {
       }
 
       // Token is automatically set as httpOnly cookie by the API
+      console.log('Signup successful, redirecting to /dashboard...');
+      
+      // Wait a moment to ensure cookie is set before redirecting
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       router.push('/dashboard');
-      router.refresh();
+      
+      // Also try a full page reload as fallback
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      const message = err instanceof Error ? err.message : 'An error occurred';
+      console.error('Signup error:', message);
+      setError(message);
       setLoading(false);
     }
   }

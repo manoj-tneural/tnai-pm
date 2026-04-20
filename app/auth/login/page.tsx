@@ -23,13 +23,18 @@ export default function LoginPage() {
     
     setLoading(true);
     try {
+      console.log('Attempting login with:', email);
+      
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
+        credentials: 'include', // Important: include cookies
       });
 
+      console.log('Login response status:', response.status);
       const data = await response.json();
+      console.log('Login response data:', data);
 
       if (!response.ok) {
         setError(data.error || 'Login failed');
@@ -38,10 +43,21 @@ export default function LoginPage() {
       }
 
       // Token is automatically set as httpOnly cookie by the API
+      console.log('Login successful, redirecting to /dashboard...');
+      
+      // Wait a moment to ensure cookie is set before redirecting
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       router.push('/dashboard');
-      router.refresh();
+      
+      // Also try a full page reload as fallback
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      const message = err instanceof Error ? err.message : 'An error occurred';
+      console.error('Login error:', message);
+      setError(message);
       setLoading(false);
     }
   }
