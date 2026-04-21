@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { query } from '@/lib/db';
 import { STATUS_COLORS } from '@/lib/types';
 import clsx from 'clsx';
+import NewFeatureButton from './NewFeatureButton';
+import FeatureRow from './FeatureRow';
 
 export default async function FeaturesPage({ params }: { params: { slug: string } }) {
   try {
@@ -38,14 +40,17 @@ export default async function FeaturesPage({ params }: { params: { slug: string 
             <span>/</span>
             <span className="text-gray-800">Features</span>
           </div>
-          <div className="flex items-start gap-4">
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl" style={{ backgroundColor: product.color + '20' }}>
-              {product.icon}
+          <div className="flex items-start justify-between">
+            <div className="flex items-start gap-4">
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl" style={{ backgroundColor: product.color + '20' }}>
+                {product.icon}
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">{product.name} — Features</h1>
+                <p className="text-gray-500 text-sm mt-1">{product.tagline}</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">{product.name} — Features</h1>
-              <p className="text-gray-500 text-sm mt-1">{product.tagline}</p>
-            </div>
+            <NewFeatureButton productId={product.id} />
           </div>
         </div>
 
@@ -93,28 +98,12 @@ export default async function FeaturesPage({ params }: { params: { slug: string 
                   <th className="text-left px-4 py-3 text-gray-600 font-semibold w-20">LLM</th>
                   <th className="text-left px-4 py-3 text-gray-600 font-semibold">Cost</th>
                   <th className="text-left px-4 py-3 text-gray-600 font-semibold">Deployment</th>
+                  <th className="text-left px-4 py-3 text-gray-600 font-semibold w-20">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {byCategory(cat!).map(f => (
-                  <tr key={f.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 text-gray-400 font-mono text-xs">{f.feature_id}</td>
-                    <td className="px-4 py-3">
-                      <div className="font-medium text-gray-900">{f.name}</div>
-                      {f.notes && <div className="text-gray-400 text-xs mt-0.5 line-clamp-1">{f.notes}</div>}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={clsx('badge', STATUS_COLORS.feature[f.status as keyof typeof STATUS_COLORS.feature])}>
-                        {f.status.replace('_', ' ')}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">{f.dev_hours ?? '—'}</td>
-                    <td className="px-4 py-3">
-                      {f.llm_based ? <span className="badge bg-purple-100 text-purple-700">LLM</span> : <span className="text-gray-300">—</span>}
-                    </td>
-                    <td className="px-4 py-3 text-gray-600 text-xs">{f.cost ?? '—'}</td>
-                    <td className="px-4 py-3 text-gray-600 text-xs">{f.deployment_type ?? '—'}</td>
-                  </tr>
+                  <FeatureRow key={f.id} feature={f} />
                 ))}
               </tbody>
             </table>

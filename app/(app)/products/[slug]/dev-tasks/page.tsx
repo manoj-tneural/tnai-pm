@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { query } from '@/lib/db';
 import clsx from 'clsx';
+import NewDevTaskButton from './NewDevTaskButton';
+import DevTaskRow from './DevTaskRow';
 
 const STATUS_CLS: Record<string, string> = {
   done: 'bg-green-100 text-green-700',
@@ -71,6 +73,7 @@ export default async function DevTasksPage({ params }: { params: { slug: string 
             <h1 className="text-2xl font-bold">{product.icon} {product.name} — Backend Dev Tasks</h1>
             <p className="text-gray-500 text-sm mt-1">{done}/{total} tasks completed</p>
           </div>
+          <NewDevTaskButton productId={product.id} />
         </div>
       <div className="card p-4 mb-6">
         <div className="flex items-center gap-4">
@@ -97,23 +100,12 @@ export default async function DevTasksPage({ params }: { params: { slug: string 
                   <th className="text-left px-4 py-3 text-gray-600 font-semibold w-16">Hours</th>
                   <th className="text-left px-4 py-3 text-gray-600 font-semibold w-24">Start</th>
                   <th className="text-left px-4 py-3 text-gray-600 font-semibold w-24">End</th>
+                  <th className="text-left px-4 py-3 text-gray-600 font-semibold w-20">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {byPhase(phase!).map(t => (
-                  <tr key={t.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 text-gray-400 font-mono text-xs">{t.task_id}</td>
-                    <td className="px-4 py-3">
-                      <div className={clsx('font-medium', t.status === 'done' ? 'line-through text-gray-400' : 'text-gray-900')}>{t.sub_task}</div>
-                      {t.description && <div className="text-gray-400 text-xs mt-0.5 line-clamp-2">{t.description}</div>}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={clsx('badge', STATUS_CLS[t.status])}>{t.status.replace('_', ' ')}</span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-500">{t.dev_hours ? `${t.dev_hours}h` : '—'}</td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">{t.planned_start ?? '—'}</td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">{t.planned_end ?? '—'}</td>
-                  </tr>
+                  <DevTaskRow key={t.id} task={t} />
                 ))}
               </tbody>
             </table>

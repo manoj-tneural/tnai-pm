@@ -5,6 +5,7 @@ import { query } from '@/lib/db';
 import { STATUS_COLORS } from '@/lib/types';
 import clsx from 'clsx';
 import NewDeploymentButton from './NewDeploymentButton';
+import DeploymentCard from './DeploymentCard';
 
 export default async function DeploymentsPage({ params }: { params: { slug: string } }) {
   const cookieStore = await cookies();
@@ -65,24 +66,7 @@ export default async function DeploymentsPage({ params }: { params: { slug: stri
       {/* Deployment cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {(deployments ?? []).map(d => (
-          <Link key={d.id} href={`/products/${params.slug}/deployments/${d.id}`}
-            className="card p-5 hover:shadow-md transition-shadow block">
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <div className="font-bold text-gray-900 text-lg">{d.customer_name}</div>
-                {d.day0_date && <div className="text-xs text-gray-400 mt-0.5">Started: {d.day0_date}</div>}
-              </div>
-              <span className={clsx('badge', STATUS_COLORS.deployment[d.status as keyof typeof STATUS_COLORS.deployment])}>
-                {d.status.replace('_', ' ')}
-              </span>
-            </div>
-            {d.notes && <p className="text-sm text-gray-500 mb-3 line-clamp-2">{d.notes}</p>}
-            <div className="flex items-center gap-4 text-xs text-gray-400">
-              {d.num_stores > 0 && <span>🏪 {d.num_stores} {d.num_stores === 1 ? 'store' : 'stores'}</span>}
-              {d.num_cameras > 0 && <span>📷 {d.num_cameras} cameras</span>}
-              <span className="ml-auto text-blue-600 font-medium">View plan →</span>
-            </div>
-          </Link>
+          <DeploymentCard key={d.id} deployment={d} productSlug={params.slug} />
         ))}
       </div>
 

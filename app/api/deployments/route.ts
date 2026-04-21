@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth-jwt';
 import { query } from '@/lib/db';
 
 // Master template tasks for new deployments (same as original)
@@ -26,19 +25,18 @@ const MASTER_TASKS = [
 
 export async function POST(request: NextRequest) {
   try {
-    // Verify auth
+    // Check auth
     const token = request.cookies.get('auth_token')?.value;
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const decoded = verifyToken(token);
-    if (!decoded) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-    }
-
     // Get request body
     const { product_id, customer_name, status, day0_date, notes, num_stores, num_cameras } = await request.json();
+
+    if (!product_id || !customer_name) {
+      return NextResponse.json({ error: 'Missing required fields: product_id, customer_name' }, { status: 400 });
+    }
 
     // Create deployment
     const deploymentResult = await query(
@@ -61,7 +59,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ deployment }, { status: 201 });
   } catch (error) {
-    console.error('Deployment creation error:', error);
-    return NextResponse.json({ error: 'Failed to create deployment' }, { status: 500 });
+    console.error('[Deployments API] POST error:', error);
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Failed to create deployment' }, { status: 500 });
   }
 }

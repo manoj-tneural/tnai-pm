@@ -1,7 +1,6 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { saveDailyLog } from '@/app/actions/products';
 
 interface Props {
   productId: string;
@@ -18,27 +17,41 @@ export default function DailyLogForm({ productId, userId, existingLog, today }: 
   });
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState('');
   const router = useRouter();
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    setError('');
     setLoading(true);
     try {
-      await saveDailyLog({
-        product_id: productId,
-        user_id: userId,
-        log_date: today,
-        yesterday: form.yesterday || undefined,
-        today: form.today || undefined,
-        blockers: form.blockers || undefined,
-        id: existingLog?.id,
+      const url = existingLog ? `/api/daily-logs/${existingLog.id}` : '/api/daily-logs';
+      const method = existingLog ? 'PATCH' : 'POST';
+      
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          product_id: productId,
+          user_id: userId,
+          log_date: today,
+          yesterday: form.yesterday || null,
+          today: form.today || null,
+          blockers: form.blockers || null,
+        }),
       });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to save log');
+      }
+
       setLoading(false);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
       router.refresh();
-    } catch (error) {
-      console.error('Failed to save log:', error);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save log');
       setLoading(false);
     }
   }
@@ -60,6 +73,7 @@ export default function DailyLogForm({ productId, userId, existingLog, today }: 
         <textarea className="textarea" rows={2} placeholder="Blockers, dependencies, waiting on..."
           value={form.blockers} onChange={e => setForm(f => ({ ...f, blockers: e.target.value }))} />
       </div>
+      {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3">{error}</div>}
       <button type="submit" className="btn-primary" disabled={loading}>
         {loading ? 'Saving…' : saved ? '✅ Saved!' : existingLog ? 'Update log' : 'Post standup'}
       </button>
