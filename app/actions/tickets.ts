@@ -1,16 +1,12 @@
 'use server';
 import { cookies } from 'next/headers';
-import { verifyToken } from '@/lib/auth-jwt';
 import { query } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 
 export async function updateTicket(ticketId: string, data: { status?: string; assignee_id?: string | null }) {
   const cookieStore = await cookies();
-  const token = cookieStore.get('token')?.value;
+  const token = cookieStore.get('auth_token')?.value;
   if (!token) throw new Error('Unauthorized');
-
-  const decoded = verifyToken(token);
-  if (!decoded) throw new Error('Unauthorized');
 
   try {
     await query(
@@ -39,11 +35,8 @@ export async function createTicket(data: {
   reporter_id: string;
 }) {
   const cookieStore = await cookies();
-  const token = cookieStore.get('token')?.value;
+  const token = cookieStore.get('auth_token')?.value;
   if (!token) throw new Error('Unauthorized');
-
-  const decoded = verifyToken(token);
-  if (!decoded) throw new Error('Unauthorized');
 
   try {
     const result = await query(
@@ -71,11 +64,8 @@ export async function createTicket(data: {
 
 export async function addComment(ticketId: string, userId: string, comment: string) {
   const cookieStore = await cookies();
-  const token = cookieStore.get('token')?.value;
+  const token = cookieStore.get('auth_token')?.value;
   if (!token) throw new Error('Unauthorized');
-
-  const decoded = verifyToken(token);
-  if (!decoded) throw new Error('Unauthorized');
 
   try {
     await query(
