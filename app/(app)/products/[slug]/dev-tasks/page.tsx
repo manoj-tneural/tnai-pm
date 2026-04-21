@@ -43,7 +43,10 @@ export default async function DevTasksPage({ params }: { params: { slug: string 
           <span>/</span>
           <span className="text-gray-800">Dev Tasks</span>
         </div>
-        <h1 className="text-2xl font-bold mb-4">{product.icon} {product.name} — Dev Tasks</h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold">{product.icon} {product.name} — Backend Dev Tasks</h1>
+          <NewDevTaskButton productId={product.id} />
+        </div>
         <div className="card p-12 text-center text-gray-400">
           <div className="text-4xl mb-3">🔧</div>
           <div>No backend dev tasks for this product yet.</div>

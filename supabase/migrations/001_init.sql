@@ -231,7 +231,7 @@ from p, (values
 -- ── SPACEZAP DEV TASKS (Backend Rework) ──────────────────────
 with p as (select id from public.products where slug = 'spacezap')
 insert into public.dev_tasks (product_id, phase, task_id, sub_task, description, dev_hours, planned_start, planned_end, status)
-select p.id, f.phase, f.task_id, f.sub_task, f.description, f.dev_hours, f.planned_start, f.planned_end, f.status
+select p.id, f.phase, f.task_id, f.sub_task, f.description, f.dev_hours, f.planned_start::date, f.planned_end::date, f.status
 from p, (values
   ('PHASE 1 — RANSAC','1.1','Y-Height Filtering','Filter raw point cloud to wall-band height range using numpy boolean mask.',1,'2026-04-02','2026-04-02','done'),
   ('PHASE 1 — RANSAC','1.2','Confidence Filter','Pass min_confidence=1 to exclude low-quality ARKit LiDAR readings.',1,'2026-04-02','2026-04-02','done'),
