@@ -5,6 +5,12 @@ import { STATUS_COLORS } from '@/lib/types';
 import clsx from 'clsx';
 import NewTicketButton from './NewTicketButton';
 
+const formatDate = (date: any): string => {
+  if (!date) return '';
+  if (typeof date === 'string') return date.split('T')[0];
+  return new Date(date).toISOString().split('T')[0];
+};
+
 export default async function TicketsPage({
   searchParams,
 }: {
@@ -165,7 +171,7 @@ export default async function TicketsPage({
                   {t.assignee_full_name ? <span>{t.assignee_full_name}</span> : <span className="text-gray-300">Unassigned</span>}
                 </td>
                 <td className="px-4 py-3 text-gray-400 text-xs">{t.reporter_full_name ?? '—'}</td>
-                <td className="px-4 py-3 text-gray-400 text-xs">{t.created_at.split('T')[0]}</td>
+                <td className="px-4 py-3 text-gray-400 text-xs">{formatDate(t.created_at)}</td>
               </tr>
             ))}
           </tbody>

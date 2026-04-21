@@ -10,6 +10,12 @@ import CommentBox from './CommentBox';
 const TYPE_ICON: Record<string, string> = { bug: '🐛', feature: '✨', improvement: '⚡', task: '📋', question: '❓' };
 const PRIORITY_ICON: Record<string, string> = { critical: '🔴', high: '🟠', medium: '🟡', low: '🟢' };
 
+const formatDate = (date: any): string => {
+  if (!date) return '';
+  if (typeof date === 'string') return date.split('T')[0];
+  return new Date(date).toISOString().split('T')[0];
+};
+
 export default async function TicketDetailPage({ params }: { params: { id: string } }) {
   const cookieStore = await cookies();
   const token = cookieStore.get('auth_token')?.value;
@@ -100,7 +106,7 @@ export default async function TicketDetailPage({ params }: { params: { id: strin
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-medium text-sm text-gray-900">{c.full_name}</span>
                       <span className="text-gray-400 text-xs">{c.role}</span>
-                      <span className="text-gray-400 text-xs">{c.created_at.split('T')[0]}</span>
+                      <span className="text-gray-400 text-xs">{formatDate(c.created_at)}</span>
                     </div>
                     <p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3 whitespace-pre-wrap">{c.comment}</p>
                   </div>
@@ -151,7 +157,7 @@ export default async function TicketDetailPage({ params }: { params: { id: strin
               )}
               <div>
                 <dt className="text-gray-500 text-xs font-semibold uppercase tracking-wide mb-1">Created</dt>
-                <dd className="text-gray-500">{ticket.created_at.split('T')[0]}</dd>
+                <dd className="text-gray-500">{formatDate(ticket.created_at)}</dd>
               </div>
             </dl>
           </div>
