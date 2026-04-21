@@ -2,6 +2,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+function formatDateForInput(date: any): string {
+  if (!date) return '';
+  if (typeof date === 'string') return date.split('T')[0];
+  if (date instanceof Date) return date.toISOString().split('T')[0];
+  return '';
+}
+
 export default function EditTicketModal({ ticket, onClose }: { ticket: any; onClose: () => void }) {
   const [formData, setFormData] = useState({
     title: ticket.title || '',
@@ -10,7 +17,7 @@ export default function EditTicketModal({ ticket, onClose }: { ticket: any; onCl
     priority: ticket.priority || 'medium',
     product_id: ticket.product_id || '',
     assignee_id: ticket.assignee_id || '',
-    due_date: ticket.due_date ? ticket.due_date.split('T')[0] : '',
+    due_date: formatDateForInput(ticket.due_date),
     status: ticket.status || 'open',
   });
   const [loading, setLoading] = useState(false);
