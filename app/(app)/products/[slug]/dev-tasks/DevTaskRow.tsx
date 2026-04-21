@@ -11,6 +11,12 @@ const STATUS_CLS: Record<string, string> = {
   blocked: 'bg-red-100 text-red-700',
 };
 
+function formatDate(date: any): string {
+  if (!date) return '—';
+  if (typeof date === 'string') return date;
+  return new Date(date).toISOString().split('T')[0];
+}
+
 export default function DevTaskRow({ task }: { task: any }) {
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -47,8 +53,8 @@ export default function DevTaskRow({ task }: { task: any }) {
           <span className={clsx('badge', STATUS_CLS[task.status])}>{task.status.replace('_', ' ')}</span>
         </td>
         <td className="px-4 py-3 text-gray-500">{task.dev_hours ? `${task.dev_hours}h` : '—'}</td>
-        <td className="px-4 py-3 text-gray-500 text-xs">{task.planned_start ?? '—'}</td>
-        <td className="px-4 py-3 text-gray-500 text-xs">{task.planned_end ?? '—'}</td>
+        <td className="px-4 py-3 text-gray-500 text-xs">{formatDate(task.planned_start)}</td>
+        <td className="px-4 py-3 text-gray-500 text-xs">{formatDate(task.planned_end)}</td>
         <td className="px-4 py-3 flex gap-2">
           <button
             onClick={() => setEditing(true)}

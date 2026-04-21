@@ -6,6 +6,12 @@ import clsx from 'clsx';
 // Make this page dynamic - don't try to build it statically
 export const dynamic = 'force-dynamic';
 
+const formatDate = (date: any): string => {
+  if (!date) return '';
+  if (typeof date === 'string') return date;
+  return new Date(date).toISOString().split('T')[0];
+};
+
 export default async function DashboardPage() {
   try {
     const [
@@ -248,7 +254,7 @@ export default async function DashboardPage() {
                     <span className="font-medium text-sm text-gray-900">{log.profiles?.full_name ?? 'Unknown'}</span>
                     <span className="text-gray-400 text-xs">{log.products?.icon} {log.products?.name}</span>
                   </div>
-                  <span className="text-gray-400 text-xs">{log.log_date}</span>
+                  <span className="text-gray-400 text-xs">{formatDate(log.log_date)}</span>
                 </div>
                 {log.today && <p className="text-sm text-gray-600 truncate">Today: {log.today}</p>}
                 {log.blockers && <p className="text-sm text-red-500 truncate">🚧 {log.blockers}</p>}

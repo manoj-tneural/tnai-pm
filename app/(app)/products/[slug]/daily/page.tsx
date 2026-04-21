@@ -33,14 +33,21 @@ export default async function DailyPage({ params }: { params: { slug: string } }
     const logs: Array<any> = logsResult.rows;
     const userId = profile?.id;
 
+    const formatDate = (date: any): string => {
+      if (!date) return '';
+      if (typeof date === 'string') return date;
+      return new Date(date).toISOString().split('T')[0];
+    };
+
     const today = new Date().toISOString().split('T')[0];
-    const myLog = (logs ?? []).find(l => l.user_id === userId && l.log_date === today);
+    const myLog = (logs ?? []).find(l => l.user_id === userId && formatDate(l.log_date) === today);
 
     // Group by date
     const byDate: Record<string, typeof logs> = {};
     (logs ?? []).forEach(l => {
-      if (!byDate[l.log_date]) byDate[l.log_date] = [];
-      byDate[l.log_date]!.push(l);
+      const dateKey = formatDate(l.log_date);
+      if (!byDate[dateKey]) byDate[dateKey] = [];
+      byDate[dateKey]!.push(l);
     });
     const dates = Object.keys(byDate).sort().reverse();
 

@@ -3,6 +3,12 @@ import { cookies } from 'next/headers';
 import { query } from '@/lib/db';
 import { redirect } from 'next/navigation';
 
+const formatDate = (date: any): string => {
+  if (!date) return '';
+  if (typeof date === 'string') return date;
+  return new Date(date).toISOString().split('T')[0];
+};
+
 export default async function GlobalDailyPage() {
   const cookieStore = await cookies();
   const token = cookieStore.get('auth_token')?.value;
@@ -26,13 +32,14 @@ export default async function GlobalDailyPage() {
   // Group by date
   const byDate: Record<string, typeof logs> = {};
   (logs ?? []).forEach(l => {
-    if (!byDate[l.log_date]) byDate[l.log_date] = [];
-    byDate[l.log_date]!.push(l);
+    const dateKey = formatDate(l.log_date);
+    if (!byDate[dateKey]) byDate[dateKey] = [];
+    byDate[dateKey]!.push(l);
   });
   const dates = Object.keys(byDate).sort().reverse();
 
   // My pending products (no log today)
-  const myLogsToday = (logs ?? []).filter(l => l.user_id === userId && l.log_date === today);
+  const myLogsToday = (logs ?? []).filter(l => l.user_id === userId && formatDate(l.log_date) === today);
   const myLoggedProducts = myLogsToday.map(l => l.product_id);
   const pendingProducts = (products ?? []).filter(p => !myLoggedProducts.includes(p.id));
 

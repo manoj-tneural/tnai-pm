@@ -2,11 +2,17 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+function formatDate(date: any): string {
+  if (!date) return '';
+  const d = new Date(date);
+  return d.toISOString().split('T')[0];
+}
+
 export default function EditDeploymentModal({ deployment, onClose }: { deployment: any; onClose: () => void }) {
   const [form, setForm] = useState({
     customer_name: deployment.customer_name,
     status: deployment.status,
-    day0_date: deployment.day0_date || '',
+    day0_date: formatDate(deployment.day0_date) || '',
     notes: deployment.notes || '',
     num_stores: deployment.num_stores?.toString() || '1',
     num_cameras: deployment.num_cameras?.toString() || '0',
