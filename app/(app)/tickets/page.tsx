@@ -141,7 +141,7 @@ export default async function TicketsPage({
           </thead>
           <tbody className="divide-y divide-gray-100">
             {(tickets ?? []).map(t => (
-              <TicketRow key={t.id} ticket={t} />
+              <TicketRow key={t.id} ticket={t} products={products} engineers={engineers} />
             ))}
           </tbody>
         </table>

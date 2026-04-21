@@ -2,6 +2,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+interface Props {
+  ticket: any;
+  onClose: () => void;
+  products: { id: string; name: string; icon: string }[];
+  engineers: { id: string; full_name: string | null; role: string }[];
+}
+
 function formatDateForInput(date: any): string {
   if (!date) return '';
   if (typeof date === 'string') return date.split('T')[0];
@@ -9,7 +16,7 @@ function formatDateForInput(date: any): string {
   return '';
 }
 
-export default function EditTicketModal({ ticket, onClose }: { ticket: any; onClose: () => void }) {
+export default function EditTicketModal({ ticket, onClose, products, engineers }: Props) {
   const [formData, setFormData] = useState({
     title: ticket.title || '',
     description: ticket.description || '',
@@ -135,22 +142,30 @@ export default function EditTicketModal({ ticket, onClose }: { ticket: any; onCl
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium mb-1">Product ID</label>
-              <input
-                type="number"
+              <label className="block text-sm font-medium mb-1">Product</label>
+              <select
                 value={formData.product_id}
-                onChange={(e) => setFormData({ ...formData, product_id: e.target.value ? parseInt(e.target.value) : '' })}
+                onChange={(e) => setFormData({ ...formData, product_id: e.target.value })}
                 className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              >
+                <option value="">Select Product</option>
+                {products.map(p => (
+                  <option key={p.id} value={p.id}>{p.icon} {p.name}</option>
+                ))}
+              </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Assignee ID</label>
-              <input
-                type="number"
+              <label className="block text-sm font-medium mb-1">Assign To</label>
+              <select
                 value={formData.assignee_id}
-                onChange={(e) => setFormData({ ...formData, assignee_id: e.target.value ? parseInt(e.target.value) : '' })}
+                onChange={(e) => setFormData({ ...formData, assignee_id: e.target.value })}
                 className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              >
+                <option value="">Unassigned</option>
+                {engineers.map(e => (
+                  <option key={e.id} value={e.id}>{e.full_name} ({e.role})</option>
+                ))}
+              </select>
             </div>
           </div>
 

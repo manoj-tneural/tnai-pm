@@ -15,7 +15,13 @@ function formatDate(date: any): string {
   return new Date(date).toISOString().split('T')[0];
 }
 
-export default function TicketRow({ ticket }: { ticket: any }) {
+interface TicketRowProps {
+  ticket: any;
+  products: { id: string; name: string; icon: string }[];
+  engineers: { id: string; full_name: string | null; role: string }[];
+}
+
+export default function TicketRow({ ticket, products, engineers }: TicketRowProps) {
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const router = useRouter();
@@ -81,7 +87,7 @@ export default function TicketRow({ ticket }: { ticket: any }) {
           </button>
         </td>
       </tr>
-      {editing && <EditTicketModal ticket={ticket} onClose={() => setEditing(false)} />}
+      {editing && <EditTicketModal ticket={ticket} onClose={() => setEditing(false)} products={products} engineers={engineers} />}
     </>
   );
 }

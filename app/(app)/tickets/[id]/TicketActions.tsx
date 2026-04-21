@@ -9,11 +9,12 @@ interface Props {
   currentStatus: string;
   currentAssignee: string | null;
   engineers: { id: string; full_name: string | null; role: string }[];
+  products: { id: string; name: string; icon: string }[];
 }
 
 const STATUSES = ['open', 'in_progress', 'in_review', 'resolved', 'closed'];
 
-export default function TicketActions({ ticket, currentStatus, currentAssignee, engineers }: Props) {
+export default function TicketActions({ ticket, currentStatus, currentAssignee, engineers, products }: Props) {
   const [status, setStatus] = useState(currentStatus);
   const [assignee, setAssignee] = useState(currentAssignee ?? '');
   const [loading, setLoading] = useState(false);
@@ -99,7 +100,7 @@ export default function TicketActions({ ticket, currentStatus, currentAssignee, 
         </div>
       </div>
 
-      {editing && <EditTicketModal ticket={ticket} onClose={() => setEditing(false)} />}
+      {editing && <EditTicketModal ticket={ticket} onClose={() => setEditing(false)} products={products} engineers={engineers} />}
     </>
   );
 }

@@ -22,7 +22,7 @@ export default async function TicketDetailPage({ params }: { params: { id: strin
   if (!token) return <div className="p-8 text-red-600">Authentication required</div>;
 
   try {
-    const [ticketResult, commentsResult, engineersResult, profileResult] = await Promise.all([
+    const [ticketResult, commentsResult, engineersResult, profileResult, productsResult] = await Promise.all([
       query(`SELECT t.*, p.name as product_name, p.icon, p.slug, p.color,
                     r.full_name as reporter_full_name, r.role as reporter_role,
                     a.full_name as assignee_full_name, a.role as assignee_role
@@ -38,12 +38,14 @@ export default async function TicketDetailPage({ params }: { params: { id: strin
              ORDER BY c.created_at`, [params.id]),
       query(`SELECT id, full_name, role FROM profiles WHERE role IN ($1, $2, $3)`, ['engineer', 'project_manager', 'management']),
       query('SELECT * FROM profiles LIMIT 1'),
+      query('SELECT id, name, icon, slug FROM products'),
     ]);
 
     const ticket: any = ticketResult.rows[0];
     const comments: Array<any> = commentsResult.rows;
     const engineers: Array<any> = engineersResult.rows;
     const user: any = profileResult.rows[0];
+    const products: Array<any> = productsResult.rows;
     const userId = user?.id;
     
     if (!ticket) notFound();
@@ -169,6 +171,7 @@ export default async function TicketDetailPage({ params }: { params: { id: strin
               currentStatus={ticket.status}
               currentAssignee={ticket.assignee_id}
               engineers={engineers}
+              products={products}
             />
           )}
         </div>
