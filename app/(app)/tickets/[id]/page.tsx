@@ -165,7 +165,7 @@ export default async function TicketDetailPage({ params }: { params: { id: strin
           {/* Actions */}
           {canEdit && (
             <TicketActions
-              ticketId={ticket.id}
+              ticket={ticket}
               currentStatus={ticket.status}
               currentAssignee={ticket.assignee_id}
               engineers={engineers}

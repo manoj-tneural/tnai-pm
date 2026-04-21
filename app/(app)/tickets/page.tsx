@@ -4,6 +4,7 @@ import { query } from '@/lib/db';
 import { STATUS_COLORS } from '@/lib/types';
 import clsx from 'clsx';
 import NewTicketButton from './NewTicketButton';
+import TicketRow from './TicketRow';
 
 const formatDate = (date: any): string => {
   if (!date) return '';
@@ -130,49 +131,17 @@ export default async function TicketsPage({
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
               <th className="text-left px-4 py-3 text-gray-600 font-semibold">Title</th>
-              <th className="text-left px-4 py-3 text-gray-600 font-semibold w-24">Type</th>
-              <th className="text-left px-4 py-3 text-gray-600 font-semibold w-24">Priority</th>
-              <th className="text-left px-4 py-3 text-gray-600 font-semibold w-28">Status</th>
+              <th className="text-left px-4 py-3 text-gray-600 font-semibold w-20">Priority</th>
+              <th className="text-left px-4 py-3 text-gray-600 font-semibold w-24">Status</th>
               <th className="text-left px-4 py-3 text-gray-600 font-semibold w-28">Product</th>
-              <th className="text-left px-4 py-3 text-gray-600 font-semibold w-32">Assignee</th>
-              <th className="text-left px-4 py-3 text-gray-600 font-semibold w-28">Reporter</th>
-              <th className="text-left px-4 py-3 text-gray-600 font-semibold w-24">Created</th>
+              <th className="text-left px-4 py-3 text-gray-600 font-semibold w-24">Assignee</th>
+              <th className="text-left px-4 py-3 text-gray-600 font-semibold w-20">Created</th>
+              <th className="text-left px-4 py-3 text-gray-600 font-semibold w-16">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {(tickets ?? []).map(t => (
-              <tr key={t.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-4 py-3">
-                  <Link href={`/tickets/${t.id}`} className="font-medium text-gray-900 hover:text-blue-600">
-                    {t.title}
-                  </Link>
-                  {t.description && <div className="text-gray-400 text-xs mt-0.5 line-clamp-1">{t.description}</div>}
-                </td>
-                <td className="px-4 py-3">
-                  <span className="text-gray-600 flex items-center gap-1">
-                    <span>{TYPE_ICON[t.type]}</span>
-                    <span className="text-xs">{t.type}</span>
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <span className={clsx('badge', STATUS_COLORS.priority[t.priority as keyof typeof STATUS_COLORS.priority])}>
-                    {PRIORITY_ICON[t.priority]} {t.priority}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <span className={clsx('badge', STATUS_COLORS.ticket[t.status as keyof typeof STATUS_COLORS.ticket])}>
-                    {t.status.replace('_', ' ')}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-gray-600 text-xs">
-                  <span>{t.icon} {t.product_name}</span>
-                </td>
-                <td className="px-4 py-3 text-gray-600 text-xs">
-                  {t.assignee_full_name ? <span>{t.assignee_full_name}</span> : <span className="text-gray-300">Unassigned</span>}
-                </td>
-                <td className="px-4 py-3 text-gray-400 text-xs">{t.reporter_full_name ?? '—'}</td>
-                <td className="px-4 py-3 text-gray-400 text-xs">{formatDate(t.created_at)}</td>
-              </tr>
+              <TicketRow key={t.id} ticket={t} />
             ))}
           </tbody>
         </table>
