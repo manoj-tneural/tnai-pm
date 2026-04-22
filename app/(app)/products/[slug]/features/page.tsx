@@ -96,8 +96,6 @@ export default async function FeaturesPage({ params }: { params: { slug: string 
                   <th className="text-left px-4 py-3 text-gray-600 font-semibold w-28">Status</th>
                   <th className="text-left px-4 py-3 text-gray-600 font-semibold w-20">Hours</th>
                   <th className="text-left px-4 py-3 text-gray-600 font-semibold w-20">LLM</th>
-                  <th className="text-left px-4 py-3 text-gray-600 font-semibold">Cost</th>
-                  <th className="text-left px-4 py-3 text-gray-600 font-semibold">Deployment</th>
                   <th className="text-left px-4 py-3 text-gray-600 font-semibold w-20">Actions</th>
                 </tr>
               </thead>

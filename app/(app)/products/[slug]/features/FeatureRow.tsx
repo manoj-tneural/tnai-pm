@@ -46,8 +46,6 @@ export default function FeatureRow({ feature }: { feature: any }) {
         <td className="px-4 py-3">
           {feature.llm_based ? <span className="badge bg-purple-100 text-purple-700">LLM</span> : <span className="text-gray-300">—</span>}
         </td>
-        <td className="px-4 py-3 text-gray-600 text-xs">{feature.cost ?? '—'}</td>
-        <td className="px-4 py-3 text-gray-600 text-xs">{feature.deployment_type ?? '—'}</td>
         <td className="px-4 py-3 flex gap-2">
           <button
             onClick={() => setEditing(true)}
