@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-export default function NewFeatureButton({ productId }: { productId: string }) {
+export default function NewFeatureButton({ productId, engineers }: { productId: string; engineers: { id: string; full_name: string | null; role: string }[] }) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
     name: '',
@@ -13,10 +13,22 @@ export default function NewFeatureButton({ productId }: { productId: string }) {
     feature_id: '',
     requirements: '',
     notes: '',
+    start_date: '',
+    end_date: '',
+    assigned_to: [] as string[],
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
+
+  function toggleAssignee(engineerId: string) {
+    setForm(f => ({
+      ...f,
+      assigned_to: f.assigned_to.includes(engineerId)
+        ? f.assigned_to.filter(id => id !== engineerId)
+        : [...f.assigned_to, engineerId]
+    }));
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -37,6 +49,9 @@ export default function NewFeatureButton({ productId }: { productId: string }) {
           cost: form.cost ? parseInt(form.cost) : 0,
           requirements: form.requirements || null,
           notes: form.notes || null,
+          start_date: form.start_date || null,
+          end_date: form.end_date || null,
+          assigned_to: form.assigned_to.length > 0 ? form.assigned_to : null,
         }),
       });
 
@@ -55,6 +70,9 @@ export default function NewFeatureButton({ productId }: { productId: string }) {
         feature_id: '',
         requirements: '',
         notes: '',
+        start_date: '',
+        end_date: '',
+        assigned_to: [],
       });
       router.refresh();
     } catch (err) {
@@ -100,6 +118,16 @@ export default function NewFeatureButton({ productId }: { productId: string }) {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
+                  <label className="label">Start Date</label>
+                  <input type="date" className="input" value={form.start_date} onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="label">End Date</label>
+                  <input type="date" className="input" value={form.end_date} onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
                   <label className="label">Dev Hours</label>
                   <input type="number" className="input" value={form.dev_hours} min="0" onChange={e => setForm(f => ({ ...f, dev_hours: e.target.value }))} />
                 </div>
@@ -111,6 +139,22 @@ export default function NewFeatureButton({ productId }: { productId: string }) {
               <div>
                 <label className="label">Feature ID</label>
                 <input className="input" placeholder="e.g., FT001" value={form.feature_id} onChange={e => setForm(f => ({ ...f, feature_id: e.target.value }))} />
+              </div>
+              <div>
+                <label className="label">Assign To</label>
+                <div className="space-y-2 bg-gray-50 p-3 rounded-lg max-h-40 overflow-y-auto">
+                  {engineers.map(eng => (
+                    <label key={eng.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-2 rounded">
+                      <input
+                        type="checkbox"
+                        checked={form.assigned_to.includes(eng.id)}
+                        onChange={() => toggleAssignee(eng.id)}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm">{eng.full_name} ({eng.role})</span>
+                    </label>
+                  ))}
+                </div>
               </div>
               <div>
                 <label className="label">Requirements</label>

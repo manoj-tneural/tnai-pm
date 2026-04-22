@@ -46,6 +46,9 @@ create table if not exists public.features (
   cost            text,
   requirements    text,
   notes           text,
+  start_date      date,
+  end_date        date,
+  assigned_to     uuid[],
   sort_order      int default 0,
   created_at      timestamptz default now()
 );

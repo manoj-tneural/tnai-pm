@@ -8,9 +8,10 @@ import FeatureRow from './FeatureRow';
 
 export default async function FeaturesPage({ params }: { params: { slug: string } }) {
   try {
-    const [productResult, featuresResult] = await Promise.all([
+    const [productResult, featuresResult, engineersResult] = await Promise.all([
       query('SELECT * FROM products WHERE slug = $1', [params.slug]),
       query('SELECT * FROM features ORDER BY sort_order'),
+      query(`SELECT id, full_name, role FROM profiles WHERE role IN ($1, $2, $3)`, ['engineer', 'project_manager', 'management']),
     ]);
 
     const product: any = productResult.rows[0];
@@ -18,6 +19,7 @@ export default async function FeaturesPage({ params }: { params: { slug: string 
 
     const allFeatures: Array<any> = featuresResult.rows.filter((f: any) => f.product_id === product.id);
     const features: Array<any> = allFeatures;
+    const engineers: Array<any> = engineersResult.rows;
 
     const categories = [...new Set((features ?? []).map((f: any) => f.category).filter(Boolean))];
     const byCategory = (cat: string) => (features ?? []).filter((f: any) => f.category === cat);
@@ -50,7 +52,7 @@ export default async function FeaturesPage({ params }: { params: { slug: string 
                 <p className="text-gray-500 text-sm mt-1">{product.tagline}</p>
               </div>
             </div>
-            <NewFeatureButton productId={product.id} />
+            <NewFeatureButton productId={product.id} engineers={engineers} />
           </div>
         </div>
 
@@ -96,12 +98,13 @@ export default async function FeaturesPage({ params }: { params: { slug: string 
                   <th className="text-left px-4 py-3 text-gray-600 font-semibold w-28">Status</th>
                   <th className="text-left px-4 py-3 text-gray-600 font-semibold w-20">Hours</th>
                   <th className="text-left px-4 py-3 text-gray-600 font-semibold w-20">LLM</th>
-                  <th className="text-left px-4 py-3 text-gray-600 font-semibold w-20">Actions</th>
+                  <th className="text-left px-4 py-3 text-gray-600 font-semibold w-40">Assigned To</th>
+                  <th className="text-left px-4 py-3 text-gray-600 font-semibold w-24">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {byCategory(cat!).map(f => (
-                  <FeatureRow key={f.id} feature={f} />
+                  <FeatureRow key={f.id} feature={f} engineers={engineers} />
                 ))}
               </tbody>
             </table>
