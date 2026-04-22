@@ -31,7 +31,7 @@ export default function EditFeatureModal({ feature, onClose, engineers }: { feat
     setForm(f => ({
       ...f,
       assigned_to: f.assigned_to.includes(engineerId)
-        ? f.assigned_to.filter(id => id !== engineerId)
+        ? f.assigned_to.filter((id: string) => id !== engineerId)
         : [...f.assigned_to, engineerId]
     }));
   }
