@@ -5,6 +5,8 @@ import { query } from '@/lib/db';
 import { STATUS_COLORS } from '@/lib/types';
 import clsx from 'clsx';
 import TaskStatusToggle from './TaskStatusToggle';
+import NewDeploymentTaskButton from './NewDeploymentTaskButton';
+import DeploymentTaskRow from './DeploymentTaskRow';
 
 export default async function DeploymentDetailPage({ params }: { params: { slug: string; id: string } }) {
   const cookieStore = await cookies();
@@ -56,6 +58,7 @@ export default async function DeploymentDetailPage({ params }: { params: { slug:
           </div>
           {deployment.notes && <p className="text-gray-500 text-sm mt-2">{deployment.notes}</p>}
         </div>
+        <NewDeploymentTaskButton deploymentId={deployment.id} />
       </div>
 
       {/* Progress bar */}
@@ -105,24 +108,7 @@ export default async function DeploymentDetailPage({ params }: { params: { slug:
             </div>
             <div className="card divide-y divide-gray-100">
               {phaseTasks.map(task => (
-                <div key={task.id} className="flex items-start gap-4 px-4 py-3 hover:bg-gray-50 transition-colors">
-                  <TaskStatusToggle taskId={task.id} status={task.status} />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-400 font-mono w-6">{task.task_no}</span>
-                      <span className={clsx('text-sm font-medium', task.status === 'done' ? 'line-through text-gray-400' : 'text-gray-800')}>
-                        {task.task_desc}
-                      </span>
-                    </div>
-                    {task.remarks && <p className="text-xs text-gray-400 mt-0.5 ml-8">{task.remarks}</p>}
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    {task.owner && <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded">{task.owner}</span>}
-                    <span className={clsx('badge text-xs', STATUS_COLORS.task[task.status as keyof typeof STATUS_COLORS.task])}>
-                      {task.status}
-                    </span>
-                  </div>
-                </div>
+                <DeploymentTaskRow key={task.id} task={task} product={product} />
               ))}
             </div>
           </section>
