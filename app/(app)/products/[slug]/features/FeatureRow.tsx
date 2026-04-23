@@ -47,17 +47,14 @@ export default function FeatureRow({ feature, engineers }: { feature: any; engin
         <td className="px-4 py-3">
           <div className="font-medium text-gray-900">{feature.name}</div>
           {feature.notes && <div className="text-gray-400 text-xs mt-0.5 line-clamp-1">{feature.notes}</div>}
-          {(feature.start_date || feature.end_date) && (
-            <div className="text-gray-400 text-xs mt-1">
-              {formatDate(feature.start_date)} → {formatDate(feature.end_date)}
-            </div>
-          )}
         </td>
         <td className="px-4 py-3">
           <span className={clsx('badge', STATUS_COLORS.feature[feature.status as keyof typeof STATUS_COLORS.feature])}>
             {feature.status.replace('_', ' ')}
           </span>
         </td>
+        <td className="px-4 py-3 text-gray-600 text-sm">{formatDate(feature.start_date) || '—'}</td>
+        <td className="px-4 py-3 text-gray-600 text-sm">{formatDate(feature.end_date) || '—'}</td>
         <td className="px-4 py-3 text-gray-600">{feature.dev_hours ?? '—'}</td>
         <td className="px-4 py-3">
           {feature.llm_based ? <span className="badge bg-purple-100 text-purple-700">LLM</span> : <span className="text-gray-300">—</span>}
