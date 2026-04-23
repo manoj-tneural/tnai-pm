@@ -12,6 +12,29 @@ function formatDate(date: any): string {
   return '';
 }
 
+function getDaysUntilEndDate(endDate: any): number | null {
+  if (!endDate) return null;
+  
+  const date = typeof endDate === 'string' ? new Date(endDate) : endDate;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const end = new Date(date);
+  end.setHours(0, 0, 0, 0);
+  
+  const diffTime = end.getTime() - today.getTime();
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+}
+
+function getRowColor(endDate: any): string {
+  const daysUntil = getDaysUntilEndDate(endDate);
+  
+  if (daysUntil === null) return '';
+  if (daysUntil < 0) return 'bg-red-50'; // Past due
+  if (daysUntil <= 2) return 'bg-yellow-50'; // Due in 2 days or less
+  return '';
+}
+
 export default function FeatureRow({ feature, engineers }: { feature: any; engineers: { id: string; full_name: string | null; role: string }[] }) {
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -42,7 +65,7 @@ export default function FeatureRow({ feature, engineers }: { feature: any; engin
 
   return (
     <>
-      <tr className="hover:bg-gray-50 transition-colors">
+      <tr className={clsx('hover:bg-opacity-75 transition-colors', getRowColor(feature.end_date))}>
         <td className="px-4 py-3 text-gray-400 font-mono text-xs">{feature.feature_id}</td>
         <td className="px-4 py-3">
           <div className="font-medium text-gray-900">{feature.name}</div>
