@@ -11,6 +11,8 @@ export default function NewDevTaskButton({ productId }: { productId: string }) {
     description: '',
     dev_hours: '0',
     status: 'todo',
+    planned_start: '',
+    planned_end: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -33,6 +35,8 @@ export default function NewDevTaskButton({ productId }: { productId: string }) {
           description: form.description || null,
           dev_hours: form.dev_hours ? parseInt(form.dev_hours) : 0,
           status: form.status,
+          planned_start: form.planned_start || null,
+          planned_end: form.planned_end || null,
         }),
       });
 
@@ -49,6 +53,8 @@ export default function NewDevTaskButton({ productId }: { productId: string }) {
         description: '',
         dev_hours: '0',
         status: 'todo',
+        planned_start: '',
+        planned_end: '',
       });
       router.refresh();
     } catch (err) {
@@ -83,6 +89,16 @@ export default function NewDevTaskButton({ productId }: { productId: string }) {
               <div>
                 <label className="label">Description</label>
                 <textarea className="textarea" rows={2} placeholder="Detailed description..." value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="label">Planned Start</label>
+                  <input type="date" className="input" value={form.planned_start} onChange={e => setForm(f => ({ ...f, planned_start: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="label">Planned End</label>
+                  <input type="date" className="input" value={form.planned_end} onChange={e => setForm(f => ({ ...f, planned_end: e.target.value }))} />
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>

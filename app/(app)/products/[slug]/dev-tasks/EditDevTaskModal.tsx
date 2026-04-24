@@ -2,6 +2,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+function formatDateForInput(date: any): string {
+  if (!date) return '';
+  if (typeof date === 'string') return date.split('T')[0];
+  if (date instanceof Date) return date.toISOString().split('T')[0];
+  return '';
+}
+
 export default function EditDevTaskModal({ task, onClose }: { task: any; onClose: () => void }) {
   const [form, setForm] = useState({
     phase: task.phase || '',
@@ -10,6 +17,8 @@ export default function EditDevTaskModal({ task, onClose }: { task: any; onClose
     description: task.description || '',
     dev_hours: task.dev_hours?.toString() || '0',
     status: task.status,
+    planned_start: formatDateForInput(task.planned_start),
+    planned_end: formatDateForInput(task.planned_end),
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -31,6 +40,8 @@ export default function EditDevTaskModal({ task, onClose }: { task: any; onClose
           description: form.description || null,
           dev_hours: form.dev_hours ? parseInt(form.dev_hours) : 0,
           status: form.status,
+          planned_start: form.planned_start || null,
+          planned_end: form.planned_end || null,
         }),
       });
 
@@ -70,6 +81,16 @@ export default function EditDevTaskModal({ task, onClose }: { task: any; onClose
           <div>
             <label className="label">Description</label>
             <textarea className="textarea" rows={2} placeholder="Detailed description..." value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="label">Planned Start</label>
+              <input type="date" className="input" value={form.planned_start} onChange={e => setForm(f => ({ ...f, planned_start: e.target.value }))} />
+            </div>
+            <div>
+              <label className="label">Planned End</label>
+              <input type="date" className="input" value={form.planned_end} onChange={e => setForm(f => ({ ...f, planned_end: e.target.value }))} />
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
