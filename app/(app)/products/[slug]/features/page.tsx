@@ -10,7 +10,7 @@ export default async function FeaturesPage({ params }: { params: { slug: string 
   try {
     const [productResult, featuresResult, engineersResult] = await Promise.all([
       query('SELECT * FROM products WHERE slug = $1', [params.slug]),
-      query('SELECT * FROM features ORDER BY sort_order'),
+      query('SELECT * FROM features ORDER BY created_at DESC'),
       query(`SELECT id, full_name, role FROM profiles WHERE role IN ($1, $2, $3)`, ['engineer', 'project_manager', 'management']),
     ]);
 
