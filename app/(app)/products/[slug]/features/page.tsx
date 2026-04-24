@@ -5,8 +5,9 @@ import { STATUS_COLORS } from '@/lib/types';
 import clsx from 'clsx';
 import NewFeatureButton from './NewFeatureButton';
 import FeatureRow from './FeatureRow';
+import StatusFilterCards from './StatusFilterCards';
 
-export default async function FeaturesPage({ params }: { params: { slug: string } }) {
+export default async function FeaturesPage({ params, searchParams }: { params: { slug: string }; searchParams: { status?: string } }) {
   try {
     const [productResult, featuresResult, engineersResult] = await Promise.all([
       query('SELECT * FROM products WHERE slug = $1', [params.slug]),
@@ -18,17 +19,23 @@ export default async function FeaturesPage({ params }: { params: { slug: string 
     if (!product) notFound();
 
     const allFeatures: Array<any> = featuresResult.rows.filter((f: any) => f.product_id === product.id);
-    const features: Array<any> = allFeatures;
+    
+    // Filter by status if provided
+    const selectedStatus = searchParams.status;
+    const features: Array<any> = selectedStatus 
+      ? allFeatures.filter((f: any) => f.status === selectedStatus)
+      : allFeatures;
+    
     const engineers: Array<any> = engineersResult.rows;
 
     const categories = [...new Set((features ?? []).map((f: any) => f.category).filter(Boolean))];
     const byCategory = (cat: string) => (features ?? []).filter((f: any) => f.category === cat);
 
     const stats = {
-      total: features?.length ?? 0,
-      completed: features?.filter((f: any) => f.status === 'completed').length ?? 0,
-      in_progress: features?.filter((f: any) => f.status === 'in_progress').length ?? 0,
-      planned: features?.filter((f: any) => f.status === 'planned').length ?? 0,
+      total: allFeatures?.length ?? 0,
+      completed: allFeatures?.filter((f: any) => f.status === 'completed').length ?? 0,
+      in_progress: allFeatures?.filter((f: any) => f.status === 'in_progress').length ?? 0,
+      planned: allFeatures?.filter((f: any) => f.status === 'planned').length ?? 0,
     };
 
     return (
@@ -56,20 +63,20 @@ export default async function FeaturesPage({ params }: { params: { slug: string 
           </div>
         </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        {[
-          { label: 'Total', value: stats.total, color: 'bg-gray-50' },
-          { label: 'Completed', value: stats.completed, color: 'bg-green-50 text-green-700' },
-          { label: 'In Progress', value: stats.in_progress, color: 'bg-blue-50 text-blue-700' },
-          { label: 'Planned', value: stats.planned, color: 'bg-gray-50 text-gray-600' },
-        ].map(s => (
-          <div key={s.label} className={clsx('card p-4', s.color)}>
-            <div className="text-2xl font-bold">{s.value}</div>
-            <div className="text-sm mt-0.5 font-medium">{s.label}</div>
+      {/* Status Filter Cards */}
+      <StatusFilterCards stats={stats} selectedStatus={selectedStatus} productSlug={params.slug} />
+
+      {/* Active Filter Indicator */}
+      {selectedStatus && (
+        <div className="mb-4 px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+          <div className="text-sm text-blue-700">
+            Showing <span className="font-semibold">{selectedStatus.replace('_', ' ')}</span> features ({features.length} of {allFeatures.length})
           </div>
-        ))}
-      </div>
+          <Link href={`/products/${params.slug}/features`} className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition">
+            Clear Filter
+          </Link>
+        </div>
+      )}
 
       {/* Tech stack */}
       <div className="card p-4 mb-6">
@@ -82,7 +89,13 @@ export default async function FeaturesPage({ params }: { params: { slug: string 
       </div>
 
       {/* Features by category */}
-      {categories.map(cat => (
+      {categories.length === 0 ? (
+        <div className="card p-12 text-center text-gray-400 mb-8">
+          <div className="text-4xl mb-3">🔍</div>
+          <div>No features found {selectedStatus ? `with status "${selectedStatus.replace('_', ' ')}"` : ''}.</div>
+        </div>
+      ) : (
+        categories.map(cat => (
         <section key={cat} className="mb-8">
           <h2 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
             <span className="w-1 h-6 rounded-full" style={{ backgroundColor: product.color }} />
@@ -112,7 +125,8 @@ export default async function FeaturesPage({ params }: { params: { slug: string 
             </table>
           </div>
         </section>
-      ))}
+        ))
+      )}
 
       {/* Tech details section */}
       <section className="mb-8">
