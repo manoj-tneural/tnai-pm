@@ -17,7 +17,7 @@ export default async function DeploymentDetailPage({ params }: { params: { slug:
     const [productResult, deploymentResult, tasksResult] = await Promise.all([
       query('SELECT * FROM products WHERE slug = $1', [params.slug]),
       query('SELECT * FROM deployments WHERE id = $1', [params.id]),
-      query('SELECT * FROM deployment_tasks WHERE deployment_id = $1 ORDER BY sort_order', [params.id]),
+      query('SELECT * FROM deployment_tasks WHERE deployment_id = $1 ORDER BY created_at ASC', [params.id]),
     ]);
 
     const product = productResult.rows[0];
