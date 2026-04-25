@@ -6,10 +6,20 @@ import clsx from 'clsx';
 import TaskStatusToggle from './TaskStatusToggle';
 import EditDeploymentTaskModal from './EditDeploymentTaskModal';
 
-export default function DeploymentTaskRow({ task, product }: { task: any; product: any }) {
+export default function DeploymentTaskRow({ task: initialTask, product }: { task: any; product: any }) {
+  const [task, setTask] = useState(initialTask);
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const router = useRouter();
+
+  const handleTaskUpdate = (updatedTask: any) => {
+    setTask(updatedTask);
+    setEditing(false);
+  };
+
+  const handleStatusChange = (newStatus: string) => {
+    setTask({ ...task, status: newStatus });
+  };
 
   async function handleDelete() {
     if (!confirm('Delete this task?')) return;
@@ -33,7 +43,7 @@ export default function DeploymentTaskRow({ task, product }: { task: any; produc
   return (
     <>
       <div className="flex items-start gap-4 px-4 py-3 hover:bg-gray-50 transition-colors">
-        <TaskStatusToggle taskId={task.id} status={task.status} />
+        <TaskStatusToggle taskId={task.id} status={task.status} onStatusChange={handleStatusChange} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-xs text-gray-400 font-mono w-6">{task.task_no}</span>
@@ -65,7 +75,7 @@ export default function DeploymentTaskRow({ task, product }: { task: any; produc
           </button>
         </div>
       </div>
-      {editing && <EditDeploymentTaskModal task={task} onClose={() => setEditing(false)} />}
+      {editing && <EditDeploymentTaskModal task={task} onClose={() => setEditing(false)} onSuccess={handleTaskUpdate} />}
     </>
   );
 }

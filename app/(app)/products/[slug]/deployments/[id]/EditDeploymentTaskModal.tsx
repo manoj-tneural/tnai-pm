@@ -2,7 +2,15 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-export default function EditDeploymentTaskModal({ task, onClose }: { task: any; onClose: () => void }) {
+export default function EditDeploymentTaskModal({ 
+  task, 
+  onClose, 
+  onSuccess 
+}: { 
+  task: any; 
+  onClose: () => void;
+  onSuccess?: (updatedTask: any) => void;
+}) {
   const [form, setForm] = useState({
     day_label: task.day_label || '',
     phase: task.phase || '',
@@ -26,7 +34,16 @@ export default function EditDeploymentTaskModal({ task, onClose }: { task: any; 
 
       if (!response.ok) throw new Error('Failed to update task');
 
-      router.refresh();
+      const updatedTask = { ...task, ...form };
+      
+      // Call onSuccess callback if provided (for real-time updates)
+      if (onSuccess) {
+        onSuccess(updatedTask);
+      } else {
+        // Fall back to router.refresh() if no callback provided
+        router.refresh();
+      }
+      
       onClose();
     } catch (error) {
       console.error('Error:', error);

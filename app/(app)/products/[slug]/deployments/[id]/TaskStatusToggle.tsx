@@ -6,7 +6,15 @@ import clsx from 'clsx';
 const CYCLE: Record<string, string> = { todo: 'ongoing', ongoing: 'done', done: 'blocked', blocked: 'todo' };
 const ICONS: Record<string, string> = { done: '✅', ongoing: '🔄', todo: '⬜', blocked: '🚫' };
 
-export default function TaskStatusToggle({ taskId, status }: { taskId: string; status: string }) {
+export default function TaskStatusToggle({ 
+  taskId, 
+  status,
+  onStatusChange 
+}: { 
+  taskId: string; 
+  status: string;
+  onStatusChange?: (newStatus: string) => void;
+}) {
   const [current, setCurrent] = useState(status);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -27,6 +35,12 @@ export default function TaskStatusToggle({ taskId, status }: { taskId: string; s
       }
 
       setCurrent(next);
+      
+      // Call callback if provided (for real-time updates)
+      if (onStatusChange) {
+        onStatusChange(next);
+      }
+      
       router.refresh();
     } catch (err) {
       console.error('Error:', err);
