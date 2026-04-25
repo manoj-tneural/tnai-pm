@@ -26,7 +26,10 @@ function getDaysUntilEndDate(endDate: any): number | null {
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 }
 
-function getRowColor(endDate: any): string {
+function getRowColor(endDate: any, status: string): string {
+  // Skip coloring if feature is completed
+  if (status === 'completed') return '';
+  
   const daysUntil = getDaysUntilEndDate(endDate);
   
   if (daysUntil === null) return '';
@@ -65,7 +68,7 @@ export default function FeatureRow({ feature, engineers }: { feature: any; engin
 
   return (
     <>
-      <tr className={clsx('hover:bg-opacity-75 transition-colors', getRowColor(feature.end_date))}>
+      <tr className={clsx('hover:bg-opacity-75 transition-colors', getRowColor(feature.end_date, feature.status))}>
         <td className="px-4 py-3 text-gray-400 font-mono text-xs">{feature.feature_id}</td>
         <td className="px-4 py-3">
           <div className="font-medium text-gray-900">{feature.name}</div>

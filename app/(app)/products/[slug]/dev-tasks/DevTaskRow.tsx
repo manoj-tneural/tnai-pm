@@ -17,6 +17,32 @@ function formatDate(date: any): string {
   return new Date(date).toISOString().split('T')[0];
 }
 
+function getDaysUntilEndDate(endDate: any): number | null {
+  if (!endDate) return null;
+  
+  const date = typeof endDate === 'string' ? new Date(endDate) : endDate;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const end = new Date(date);
+  end.setHours(0, 0, 0, 0);
+  
+  const diffTime = end.getTime() - today.getTime();
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+}
+
+function getRowColor(endDate: any, status: string): string {
+  // Skip coloring if task is done
+  if (status === 'done') return '';
+  
+  const daysUntil = getDaysUntilEndDate(endDate);
+  
+  if (daysUntil === null) return '';
+  if (daysUntil < 0) return 'bg-red-50'; // Past due
+  if (daysUntil <= 2) return 'bg-yellow-50'; // Due in 2 days or less
+  return '';
+}
+
 export default function DevTaskRow({ task }: { task: any }) {
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -43,7 +69,7 @@ export default function DevTaskRow({ task }: { task: any }) {
 
   return (
     <>
-      <tr className="hover:bg-gray-50 transition-colors">
+      <tr className={clsx('hover:bg-opacity-75 transition-colors', getRowColor(task.planned_end, task.status))}>
         <td className="px-4 py-3 text-gray-400 font-mono text-xs">{task.task_id}</td>
         <td className="px-4 py-3">
           <div className={clsx('font-medium', task.status === 'done' ? 'line-through text-gray-400' : 'text-gray-900')}>{task.sub_task}</div>
