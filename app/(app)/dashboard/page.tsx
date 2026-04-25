@@ -183,8 +183,8 @@ export default async function DashboardPage() {
                   <td className="px-4 py-3 font-medium text-gray-900">{d.customer_name}</td>
                   <td className="px-4 py-3">
                     <span className="flex items-center gap-1.5">
-                      <span>{d.products?.icon}</span>
-                      <span className="text-gray-600">{d.products?.name}</span>
+                      <span>{d.icon}</span>
+                      <span className="text-gray-600">{d.name}</span>
                     </span>
                   </td>
                   <td className="px-4 py-3">
@@ -194,7 +194,7 @@ export default async function DashboardPage() {
                   </td>
                   <td className="px-4 py-3 text-gray-500 text-xs max-w-xs truncate">{d.notes}</td>
                   <td className="px-4 py-3">
-                    <Link href={`/products/${d.products?.slug}/deployments/${d.id}`}
+                    <Link href={`/products/${d.slug}/deployments/${d.id}`}
                       className="text-blue-600 hover:underline text-xs">View →</Link>
                   </td>
                 </tr>
