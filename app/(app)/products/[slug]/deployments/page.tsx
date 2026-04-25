@@ -6,8 +6,9 @@ import { STATUS_COLORS } from '@/lib/types';
 import clsx from 'clsx';
 import NewDeploymentButton from './NewDeploymentButton';
 import DeploymentCard from './DeploymentCard';
+import DeploymentStatusFilter from './DeploymentStatusFilter';
 
-export default async function DeploymentsPage({ params }: { params: { slug: string } }) {
+export default async function DeploymentsPage({ params, searchParams }: { params: { slug: string }; searchParams: { status?: string } }) {
   const cookieStore = await cookies();
   const token = cookieStore.get('auth_token')?.value;
   if (!token) redirect('/auth/login');
@@ -21,14 +22,19 @@ export default async function DeploymentsPage({ params }: { params: { slug: stri
       'SELECT * FROM deployments WHERE product_id = $1 ORDER BY created_at DESC',
       [product.id]
     );
-    const deployments: Array<any> = deploymentsResult.rows;
+    const allDeployments: Array<any> = deploymentsResult.rows;
 
     const stats = {
-      total: deployments?.length ?? 0,
-      planning: deployments?.filter(d => d.status === 'planning').length ?? 0,
-      active: deployments?.filter(d => d.status === 'in_progress').length ?? 0,
-      done: deployments?.filter(d => d.status === 'completed').length ?? 0,
+      total: allDeployments?.length ?? 0,
+      planning: allDeployments?.filter(d => d.status === 'planning').length ?? 0,
+      active: allDeployments?.filter(d => d.status === 'in_progress').length ?? 0,
+      done: allDeployments?.filter(d => d.status === 'completed').length ?? 0,
     };
+
+    // Filter deployments based on status parameter
+    const deployments = searchParams.status 
+      ? allDeployments.filter(d => d.status === searchParams.status)
+      : allDeployments;
 
     return (
     <div className="p-8 max-w-6xl mx-auto">
@@ -48,20 +54,27 @@ export default async function DeploymentsPage({ params }: { params: { slug: stri
         <NewDeploymentButton productId={product.id} productSlug={params.slug} />
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        {[
-          { label: 'Total', value: stats.total, cls: 'bg-gray-50' },
-          { label: 'Planning', value: stats.planning, cls: 'bg-gray-50 text-gray-600' },
-          { label: 'Active', value: stats.active, cls: 'bg-blue-50 text-blue-700' },
-          { label: 'Completed', value: stats.done, cls: 'bg-green-50 text-green-700' },
-        ].map(s => (
-          <div key={s.label} className={clsx('card p-4', s.cls)}>
-            <div className="text-2xl font-bold">{s.value}</div>
-            <div className="text-sm font-medium mt-0.5">{s.label}</div>
-          </div>
-        ))}
-      </div>
+      {/* Stats Cards - Clickable Filter */}
+      <DeploymentStatusFilter 
+        stats={stats} 
+        currentStatus={searchParams.status}
+        productSlug={params.slug}
+      />
+
+      {/* Filter indicator */}
+      {searchParams.status && (
+        <div className="mb-4 flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <span className="text-sm text-gray-700">
+            Filtering by: <span className="font-semibold capitalize">{searchParams.status.replace('_', ' ')}</span>
+          </span>
+          <Link 
+            href={`/products/${params.slug}/deployments`}
+            className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+          >
+            Clear Filter
+          </Link>
+        </div>
+      )}
 
       {/* Deployment cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
