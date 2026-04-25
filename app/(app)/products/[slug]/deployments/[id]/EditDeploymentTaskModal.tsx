@@ -35,17 +35,8 @@ export default function EditDeploymentTaskModal({
 
       if (!response.ok) throw new Error('Failed to update task');
 
-      const updatedTask = { ...task, ...form };
-      
-      // Call onSuccess callback if provided (for real-time updates)
-      if (onSuccess) {
-        onSuccess(updatedTask);
-      } else {
-        // Fall back to router.refresh() if no callback provided
-        router.refresh();
-      }
-      
       onClose();
+      router.refresh();
     } catch (error) {
       console.error('Error:', error);
       alert('Failed to update task');
