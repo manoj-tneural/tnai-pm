@@ -18,6 +18,7 @@ export default function EditDeploymentTaskModal({
     task_desc: task.task_desc || '',
     owner: task.owner || '',
     status: task.status || 'todo',
+    remarks: task.remarks || '',
   });
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -120,6 +121,16 @@ export default function EditDeploymentTaskModal({
               <option value="done">Done</option>
               <option value="blocked">Blocked</option>
             </select>
+          </div>
+          <div>
+            <label className="label">Notes</label>
+            <textarea
+              className="input"
+              placeholder="Add any notes or remarks about this task"
+              rows={3}
+              value={form.remarks}
+              onChange={(e) => setForm({ ...form, remarks: e.target.value })}
+            />
           </div>
           <div className="flex gap-3 pt-2">
             <button

@@ -11,6 +11,7 @@ export default function NewDeploymentTaskButton({ deploymentId }: { deploymentId
     task_desc: '',
     owner: '',
     status: 'todo',
+    remarks: '',
   });
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -28,7 +29,7 @@ export default function NewDeploymentTaskButton({ deploymentId }: { deploymentId
       if (!response.ok) throw new Error('Failed to create task');
 
       setOpen(false);
-      setForm({ day_label: '', phase: '', task_no: '', task_desc: '', owner: '', status: 'todo' });
+      setForm({ day_label: '', phase: '', task_no: '', task_desc: '', owner: '', status: 'todo', remarks: '' });
       router.refresh();
     } catch (error) {
       console.error('Error:', error);
@@ -113,6 +114,16 @@ export default function NewDeploymentTaskButton({ deploymentId }: { deploymentId
                   <option value="done">Done</option>
                   <option value="blocked">Blocked</option>
                 </select>
+              </div>
+              <div>
+                <label className="label">Notes</label>
+                <textarea
+                  className="input"
+                  placeholder="Add any notes or remarks about this task"
+                  rows={3}
+                  value={form.remarks}
+                  onChange={(e) => setForm({ ...form, remarks: e.target.value })}
+                />
               </div>
               <div className="flex gap-3 pt-2">
                 <button
