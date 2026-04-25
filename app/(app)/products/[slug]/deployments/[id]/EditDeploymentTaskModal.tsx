@@ -36,7 +36,7 @@ export default function EditDeploymentTaskModal({
       if (!response.ok) throw new Error('Failed to update task');
 
       onClose();
-      router.refresh();
+      window.location.reload();
     } catch (error) {
       console.error('Error:', error);
       alert('Failed to update task');
