@@ -8,7 +8,7 @@ import TaskStatusToggle from './TaskStatusToggle';
 import NewDeploymentTaskButton from './NewDeploymentTaskButton';
 import DeploymentTaskRow from './DeploymentTaskRow';
 
-export default async function DeploymentDetailPage({ params }: { params: { slug: string; id: string } }) {
+export default async function DeploymentDetailPage({ params, searchParams }: { params: { slug: string; id: string }; searchParams: { status?: string } }) {
   const cookieStore = await cookies();
   const token = cookieStore.get('auth_token')?.value;
   if (!token) redirect('/auth/login');
@@ -22,9 +22,23 @@ export default async function DeploymentDetailPage({ params }: { params: { slug:
 
     const product = productResult.rows[0];
     const deployment = deploymentResult.rows[0];
-    const tasks: Array<any> = tasksResult.rows;
+    const allTasks: Array<any> = tasksResult.rows;
 
     if (!product || !deployment) notFound();
+
+    // Filter tasks based on status parameter
+    const tasks = searchParams.status 
+      ? allTasks.filter(t => t.status === searchParams.status)
+      : allTasks;
+
+    // Calculate stats from ALL tasks
+    const stats = {
+      total: allTasks.length,
+      done: allTasks.filter(t => t.status === 'done').length,
+      ongoing: allTasks.filter(t => t.status === 'ongoing').length,
+      todo: allTasks.filter(t => t.status === 'todo').length,
+      blocked: allTasks.filter(t => t.status === 'blocked').length,
+    };
 
     const phases = [...new Set((tasks ?? []).map(t => t.phase).filter(Boolean))];
     const byPhase = (phase: string) => (tasks ?? []).filter(t => t.phase === phase);
@@ -70,12 +84,40 @@ export default async function DeploymentDetailPage({ params }: { params: { slug:
         <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
           <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: product.color }} />
         </div>
-        <div className="flex gap-4 mt-3 text-xs text-gray-500">
-          <span className="flex items-center gap-1"><span className="w-2 h-2 bg-green-500 rounded-full" /> {(tasks ?? []).filter(t => t.status === 'done').length} Done</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 bg-blue-500 rounded-full" /> {(tasks ?? []).filter(t => t.status === 'ongoing').length} Ongoing</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 bg-gray-400 rounded-full" /> {(tasks ?? []).filter(t => t.status === 'todo').length} Todo</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 bg-red-500 rounded-full" /> {(tasks ?? []).filter(t => t.status === 'blocked').length} Blocked</span>
+        
+        {/* Status Filter Cards */}
+        <div className="flex flex-wrap gap-2 mt-4">
+          <Link href={`/products/${params.slug}/deployments/${deployment.id}`} className={clsx('px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all', !searchParams.status ? 'bg-gray-200 text-gray-900 ring-2 ring-gray-400' : 'bg-gray-100 text-gray-600 hover:bg-gray-150')}>
+            All ({stats.total})
+          </Link>
+          <Link href={`/products/${params.slug}/deployments/${deployment.id}?status=done`} className={clsx('px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all', searchParams.status === 'done' ? 'bg-green-200 text-green-900 ring-2 ring-green-400' : 'bg-green-100 text-green-600 hover:bg-green-150')}>
+            ✅ Done ({stats.done})
+          </Link>
+          <Link href={`/products/${params.slug}/deployments/${deployment.id}?status=ongoing`} className={clsx('px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all', searchParams.status === 'ongoing' ? 'bg-blue-200 text-blue-900 ring-2 ring-blue-400' : 'bg-blue-100 text-blue-600 hover:bg-blue-150')}>
+            🔄 Ongoing ({stats.ongoing})
+          </Link>
+          <Link href={`/products/${params.slug}/deployments/${deployment.id}?status=todo`} className={clsx('px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all', searchParams.status === 'todo' ? 'bg-gray-300 text-gray-900 ring-2 ring-gray-500' : 'bg-gray-200 text-gray-600 hover:bg-gray-250')}>
+            ⬜ Todo ({stats.todo})
+          </Link>
+          <Link href={`/products/${params.slug}/deployments/${deployment.id}?status=blocked`} className={clsx('px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all', searchParams.status === 'blocked' ? 'bg-red-200 text-red-900 ring-2 ring-red-400' : 'bg-red-100 text-red-600 hover:bg-red-150')}>
+            🚫 Blocked ({stats.blocked})
+          </Link>
         </div>
+
+        {/* Filter indicator */}
+        {searchParams.status && (
+          <div className="mt-3 flex items-center justify-between p-2 bg-blue-50 rounded-lg border border-blue-200">
+            <span className="text-xs text-gray-700">
+              Filtering by: <span className="font-semibold capitalize">{searchParams.status}</span>
+            </span>
+            <Link 
+              href={`/products/${params.slug}/deployments/${deployment.id}`}
+              className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+            >
+              Clear Filter
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Store onboarding grid */}
@@ -94,26 +136,34 @@ export default async function DeploymentDetailPage({ params }: { params: { slug:
       )}
 
       {/* Task phases */}
-      {phases.map(phase => {
-        const phaseTasks = byPhase(phase!);
-        const phaseDone = phaseTasks.filter(t => t.status === 'done').length;
-        return (
-          <section key={phase} className="mb-6">
-            <div className="flex items-center gap-3 mb-3">
-              <h2 className="font-bold text-gray-800">{phase}</h2>
-              <span className="text-xs text-gray-400">{phaseDone}/{phaseTasks.length}</span>
-              <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden max-w-32">
-                <div className="h-full bg-green-500 rounded-full" style={{ width: `${phaseTasks.length ? (phaseDone / phaseTasks.length) * 100 : 0}%` }} />
+      {phases.length === 0 ? (
+        <div className="card p-12 text-center text-gray-400">
+          <div className="text-4xl mb-3">📋</div>
+          <div className="font-medium">No tasks match this filter</div>
+          <div className="text-sm mt-1">Try selecting a different status or clear the filter</div>
+        </div>
+      ) : (
+        phases.map(phase => {
+          const phaseTasks = byPhase(phase!);
+          const phaseDone = phaseTasks.filter(t => t.status === 'done').length;
+          return (
+            <section key={phase} className="mb-6">
+              <div className="flex items-center gap-3 mb-3">
+                <h2 className="font-bold text-gray-800">{phase}</h2>
+                <span className="text-xs text-gray-400">{phaseDone}/{phaseTasks.length}</span>
+                <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden max-w-32">
+                  <div className="h-full bg-green-500 rounded-full" style={{ width: `${phaseTasks.length ? (phaseDone / phaseTasks.length) * 100 : 0}%` }} />
+                </div>
               </div>
-            </div>
-            <div className="card divide-y divide-gray-100">
-              {phaseTasks.map(task => (
-                <DeploymentTaskRow key={task.id} task={task} product={product} />
-              ))}
-            </div>
-          </section>
-        );
-      })}
+              <div className="card divide-y divide-gray-100">
+                {phaseTasks.map(task => (
+                  <DeploymentTaskRow key={task.id} task={task} product={product} />
+                ))}
+              </div>
+            </section>
+          );
+        })
+      )}
     </div>
     );
   } catch (err) {
