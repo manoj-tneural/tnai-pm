@@ -16,9 +16,10 @@ export default function TaskStatusToggle({ taskId, status }: { taskId: string; s
     setLoading(true);
 
     try {
-      const response = await fetch(`/api/deployments/${taskId}`, {
+      const response = await fetch(`/api/deployment-tasks/${taskId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: next }),
       });
 
       if (!response.ok) {
