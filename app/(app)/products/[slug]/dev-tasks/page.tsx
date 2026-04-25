@@ -123,32 +123,33 @@ export default async function DevTasksPage({ params, searchParams }: { params: {
           <div>No dev tasks found {selectedStatus ? `with status "${selectedStatus.replace('_', ' ')}"` : ''}.</div>
         </div>
       ) : (
-        <section key={phase} className="mb-8">
-          <h2 className="font-bold text-gray-800 text-lg mb-3 flex items-center gap-2">
-            <span className="w-1 h-6 rounded-full" style={{ backgroundColor: product.color }} />
-            {phase}
-          </h2>
-          <div className="card overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="text-left px-4 py-3 text-gray-600 font-semibold w-16">Task</th>
-                  <th className="text-left px-4 py-3 text-gray-600 font-semibold">Sub-Task</th>
-                  <th className="text-left px-4 py-3 text-gray-600 font-semibold w-28">Status</th>
-                  <th className="text-left px-4 py-3 text-gray-600 font-semibold w-16">Hours</th>
-                  <th className="text-left px-4 py-3 text-gray-600 font-semibold w-24">Start</th>
-                  <th className="text-left px-4 py-3 text-gray-600 font-semibold w-24">End</th>
-                  <th className="text-left px-4 py-3 text-gray-600 font-semibold w-20">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {byPhase(phase!).map(t => (
-                  <DevTaskRow key={t.id} task={t} />
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+        phases.map(phase => (
+          <section key={phase} className="mb-8">
+            <h2 className="font-bold text-gray-800 text-lg mb-3 flex items-center gap-2">
+              <span className="w-1 h-6 rounded-full" style={{ backgroundColor: product.color }} />
+              {phase}
+            </h2>
+            <div className="card overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="text-left px-4 py-3 text-gray-600 font-semibold w-16">Task</th>
+                    <th className="text-left px-4 py-3 text-gray-600 font-semibold">Sub-Task</th>
+                    <th className="text-left px-4 py-3 text-gray-600 font-semibold w-28">Status</th>
+                    <th className="text-left px-4 py-3 text-gray-600 font-semibold w-16">Hours</th>
+                    <th className="text-left px-4 py-3 text-gray-600 font-semibold w-24">Start</th>
+                    <th className="text-left px-4 py-3 text-gray-600 font-semibold w-24">End</th>
+                    <th className="text-left px-4 py-3 text-gray-600 font-semibold w-20">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {byPhase(phase!).map(t => (
+                    <DevTaskRow key={t.id} task={t} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
         ))
       )}
     </div>
