@@ -112,7 +112,7 @@ export default async function FeaturesPage({ params, searchParams }: { params: {
                   <th className="text-left px-4 py-3 text-gray-600 font-semibold w-24">Start Date</th>
                   <th className="text-left px-4 py-3 text-gray-600 font-semibold w-24">End Date</th>
                   <th className="text-left px-4 py-3 text-gray-600 font-semibold w-20">Hours</th>
-                  <th className="text-left px-4 py-3 text-gray-600 font-semibold w-20">LLM</th>
+                  <th className="text-left px-4 py-3 text-gray-600 font-semibold w-20">Accuracy</th>
                   <th className="text-left px-4 py-3 text-gray-600 font-semibold w-40">Assigned To</th>
                   <th className="text-left px-4 py-3 text-gray-600 font-semibold w-24">Actions</th>
                 </tr>
