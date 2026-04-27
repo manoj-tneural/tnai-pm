@@ -6,3 +6,6 @@ ALTER TABLE features ADD COLUMN end_date date;
 
 -- Add assigned_to column to features table (UUID array for multiple assignees)
 ALTER TABLE features ADD COLUMN assigned_to uuid[];
+
+-- Add accuracy column to features table (numeric percentage 0-100)
+ALTER TABLE features ADD COLUMN accuracy NUMERIC(5,2) DEFAULT NULL;
