@@ -67,6 +67,10 @@ export default function DevTaskRow({ task, engineers }: { task: any; engineers: 
     }
   }
 
+  const assignedEngineers = task.assigned_to
+    ? engineers.filter((e: any) => task.assigned_to.includes(e.id))
+    : [];
+
   return (
     <>
       <tr className={clsx('hover:bg-opacity-75 transition-colors', getRowColor(task.planned_end, task.status))}>
@@ -81,6 +85,21 @@ export default function DevTaskRow({ task, engineers }: { task: any; engineers: 
         <td className="px-4 py-3 text-gray-500">{task.dev_hours ? `${task.dev_hours}h` : '—'}</td>
         <td className="px-4 py-3 text-gray-500 text-xs">{formatDate(task.planned_start)}</td>
         <td className="px-4 py-3 text-gray-500 text-xs">{formatDate(task.planned_end)}</td>
+        <td className="px-4 py-3">
+          <div className="text-xs max-w-xs">
+            {assignedEngineers.length > 0 ? (
+              <div className="flex flex-wrap gap-1">
+                {assignedEngineers.map((eng: any) => (
+                  <span key={eng.id} className="badge bg-blue-100 text-blue-700 whitespace-nowrap">
+                    {eng.full_name}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <span className="text-gray-300">Unassigned</span>
+            )}
+          </div>
+        </td>
         <td className="px-4 py-3 flex gap-2">
           <button
             onClick={() => setEditing(true)}
