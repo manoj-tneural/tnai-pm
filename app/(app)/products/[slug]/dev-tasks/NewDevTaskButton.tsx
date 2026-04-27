@@ -123,6 +123,7 @@ export default function NewDevTaskButton({ productId, engineers }: { productId: 
                     <option value="todo">To Do</option>
                     <option value="in_progress">In Progress</option>
                     <option value="done">Done</option>
+                    <option value="testing">Testing</option>
                     <option value="blocked">Blocked</option>
                   </select>
                 </div>

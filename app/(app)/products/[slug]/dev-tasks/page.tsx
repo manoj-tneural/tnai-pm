@@ -12,6 +12,7 @@ const STATUS_CLS: Record<string, string> = {
   in_progress: 'bg-blue-100 text-blue-700',
   todo: 'bg-gray-100 text-gray-600',
   blocked: 'bg-red-100 text-red-700',
+  testing: 'bg-purple-100 text-purple-700',
 };
 
 export default async function DevTasksPage({ params, searchParams }: { params: { slug: string }; searchParams: { status?: string } }) {
@@ -51,6 +52,7 @@ export default async function DevTasksPage({ params, searchParams }: { params: {
       in_progress: allTasks?.filter((t: any) => t.status === 'in_progress').length ?? 0,
       done: allTasks?.filter((t: any) => t.status === 'done').length ?? 0,
       blocked: allTasks?.filter((t: any) => t.status === 'blocked').length ?? 0,
+      testing: allTasks?.filter((t: any) => t.status === 'testing').length ?? 0,
     };
 
     if ((allTasks ?? []).length === 0) {

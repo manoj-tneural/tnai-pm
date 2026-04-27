@@ -9,6 +9,7 @@ interface Props {
     in_progress: number;
     done: number;
     blocked: number;
+    testing: number;
   };
   selectedStatus?: string;
   productSlug: string;
@@ -19,6 +20,7 @@ export default function DevTaskStatusFilter({ stats, selectedStatus, productSlug
     { key: 'all', label: 'All Tasks', value: stats.total, color: 'bg-gray-50 hover:bg-gray-100', icon: '📋' },
     { key: 'todo', label: 'To Do', value: stats.todo, color: 'bg-gray-50 hover:bg-gray-100 text-gray-600', icon: '📝' },
     { key: 'in_progress', label: 'In Progress', value: stats.in_progress, color: 'bg-blue-50 hover:bg-blue-100 text-blue-700', icon: '⚡' },
+    { key: 'testing', label: 'Testing', value: stats.testing, color: 'bg-purple-50 hover:bg-purple-100 text-purple-700', icon: '🧪' },
     { key: 'done', label: 'Done', value: stats.done, color: 'bg-green-50 hover:bg-green-100 text-green-700', icon: '✅' },
     { key: 'blocked', label: 'Blocked', value: stats.blocked, color: 'bg-red-50 hover:bg-red-100 text-red-700', icon: '🚫' },
   ];
@@ -34,7 +36,7 @@ export default function DevTaskStatusFilter({ stats, selectedStatus, productSlug
   };
 
   return (
-    <div className="grid grid-cols-5 gap-3 mb-6">
+    <div className="grid grid-cols-6 gap-3 mb-6">
       {statusCards.map(s => (
         <Link key={s.key} href={getUrl(s.key)}>
           <div className={clsx(
