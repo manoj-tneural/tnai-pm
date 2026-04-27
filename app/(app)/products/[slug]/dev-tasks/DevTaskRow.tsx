@@ -43,7 +43,7 @@ function getRowColor(endDate: any, status: string): string {
   return '';
 }
 
-export default function DevTaskRow({ task }: { task: any }) {
+export default function DevTaskRow({ task, engineers }: { task: any; engineers: { id: string; full_name: string | null; role: string }[] }) {
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const router = useRouter();
@@ -99,7 +99,7 @@ export default function DevTaskRow({ task }: { task: any }) {
           </button>
         </td>
       </tr>
-      {editing && <EditDevTaskModal task={task} onClose={() => setEditing(false)} />}
+      {editing && <EditDevTaskModal task={task} onClose={() => setEditing(false)} engineers={engineers} />}
     </>
   );
 }

@@ -9,7 +9,7 @@ function formatDateForInput(date: any): string {
   return '';
 }
 
-export default function EditDevTaskModal({ task, onClose }: { task: any; onClose: () => void }) {
+export default function EditDevTaskModal({ task, onClose, engineers }: { task: any; onClose: () => void; engineers: { id: string; full_name: string | null; role: string }[] }) {
   const [form, setForm] = useState({
     phase: task.phase || '',
     task_id: task.task_id || '',
@@ -19,10 +19,20 @@ export default function EditDevTaskModal({ task, onClose }: { task: any; onClose
     status: task.status,
     planned_start: formatDateForInput(task.planned_start),
     planned_end: formatDateForInput(task.planned_end),
+    assigned_to: (task.assigned_to && Array.isArray(task.assigned_to)) ? task.assigned_to : [],
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
+
+  function toggleAssignee(engineerId: string) {
+    setForm(f => ({
+      ...f,
+      assigned_to: f.assigned_to.includes(engineerId)
+        ? f.assigned_to.filter((id: string) => id !== engineerId)
+        : [...f.assigned_to, engineerId]
+    }));
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -42,6 +52,7 @@ export default function EditDevTaskModal({ task, onClose }: { task: any; onClose
           status: form.status,
           planned_start: form.planned_start || null,
           planned_end: form.planned_end || null,
+          assigned_to: form.assigned_to.length > 0 ? form.assigned_to : null,
         }),
       });
 
@@ -105,6 +116,22 @@ export default function EditDevTaskModal({ task, onClose }: { task: any; onClose
                 <option value="done">Done</option>
                 <option value="blocked">Blocked</option>
               </select>
+            </div>
+          </div>
+          <div>
+            <label className="label">Assign To</label>
+            <div className="space-y-2 bg-gray-50 p-3 rounded-lg max-h-40 overflow-y-auto">
+              {engineers.map(eng => (
+                <label key={eng.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-2 rounded">
+                  <input
+                    type="checkbox"
+                    checked={form.assigned_to.includes(eng.id)}
+                    onChange={() => toggleAssignee(eng.id)}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm">{eng.full_name} ({eng.role})</span>
+                </label>
+              ))}
             </div>
           </div>
           {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3">{error}</div>}

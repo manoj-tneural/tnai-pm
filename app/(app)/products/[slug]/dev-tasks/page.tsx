@@ -20,8 +20,13 @@ export default async function DevTasksPage({ params, searchParams }: { params: {
   if (!token) redirect('/auth/login');
 
   try {
-    const productResult = await query('SELECT * FROM products WHERE slug = $1', [params.slug]);
+    const [productResult, engineersResult] = await Promise.all([
+      query('SELECT * FROM products WHERE slug = $1', [params.slug]),
+      query('SELECT id, full_name, role FROM profiles ORDER BY full_name'),
+    ]);
+
     const product = productResult.rows[0];
+    const engineers: Array<any> = engineersResult.rows;
     if (!product) notFound();
 
     const tasksResult = await query(
@@ -60,7 +65,7 @@ export default async function DevTasksPage({ params, searchParams }: { params: {
         </div>
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">{product.icon} {product.name} — Backend Dev Tasks</h1>
-          <NewDevTaskButton productId={product.id} />
+          <NewDevTaskButton productId={product.id} engineers={engineers} />
         </div>
         <div className="card p-12 text-center text-gray-400">
           <div className="text-4xl mb-3">🔧</div>
@@ -91,7 +96,7 @@ export default async function DevTasksPage({ params, searchParams }: { params: {
             <h1 className="text-2xl font-bold">{product.icon} {product.name} — Backend Dev Tasks</h1>
             <p className="text-gray-500 text-sm mt-1">{done}/{total} tasks completed</p>
           </div>
-          <NewDevTaskButton productId={product.id} />
+          <NewDevTaskButton productId={product.id} engineers={engineers} />
         </div>
       <div className="card p-4 mb-6">
         <div className="flex items-center gap-4">
@@ -144,7 +149,7 @@ export default async function DevTasksPage({ params, searchParams }: { params: {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {byPhase(phase!).map(t => (
-                    <DevTaskRow key={t.id} task={t} />
+                    <DevTaskRow key={t.id} task={t} engineers={engineers} />
                   ))}
                 </tbody>
               </table>
