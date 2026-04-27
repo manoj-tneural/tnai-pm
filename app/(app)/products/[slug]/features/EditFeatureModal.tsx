@@ -17,6 +17,7 @@ export default function EditFeatureModal({ feature, onClose, engineers }: { feat
     dev_hours: feature.dev_hours?.toString() || '0',
     cost: feature.cost?.toString() || '0',
     feature_id: feature.feature_id,
+    accuracy: feature.accuracy?.toString() || '',
     requirements: feature.requirements || '',
     notes: feature.notes || '',
     start_date: formatDateForInput(feature.start_date),
@@ -51,6 +52,7 @@ export default function EditFeatureModal({ feature, onClose, engineers }: { feat
           status: form.status,
           dev_hours: form.dev_hours ? parseInt(form.dev_hours) : 0,
           cost: form.cost ? parseInt(form.cost) : 0,
+          accuracy: form.accuracy ? parseFloat(form.accuracy) : null,
           feature_id: form.feature_id || null,
           requirements: form.requirements || null,
           notes: form.notes || null,
@@ -92,6 +94,11 @@ export default function EditFeatureModal({ feature, onClose, engineers }: { feat
                 <option value="cv">Computer Vision</option>
                 <option value="analytics">Analytics</option>
                 <option value="integration">Integration</option>
+                <option value="retail">Retail</option>
+                    <option value="banking">Banking</option>
+                    <option value="restaurant">Restaurant</option>
+                    <option value="automobile">Automobile</option>
+                    <option value="healthcare">Healthcare</option>
                 <option value="other">Other</option>
               </select>
             </div>
@@ -122,9 +129,13 @@ export default function EditFeatureModal({ feature, onClose, engineers }: { feat
               <input type="number" className="input" value={form.dev_hours} min="0" onChange={e => setForm(f => ({ ...f, dev_hours: e.target.value }))} />
             </div>
             <div>
-              <label className="label">Cost ($)</label>
-              <input type="number" className="input" value={form.cost} min="0" onChange={e => setForm(f => ({ ...f, cost: e.target.value }))} />
+              <label className="label">Accuracy (%)</label>
+              <input type="number" className="input" value={form.accuracy} min="0" max="100" step="0.1" placeholder="e.g., 95.5" onChange={e => setForm(f => ({ ...f, accuracy: e.target.value }))} />
             </div>
+          </div>
+          <div>
+            <label className="label">Cost ($)</label>
+            <input type="number" className="input" value={form.cost} min="0" onChange={e => setForm(f => ({ ...f, cost: e.target.value }))} />
           </div>
           <div>
             <label className="label">Feature ID</label>

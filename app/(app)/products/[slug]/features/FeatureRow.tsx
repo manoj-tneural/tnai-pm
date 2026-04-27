@@ -82,6 +82,7 @@ export default function FeatureRow({ feature, engineers }: { feature: any; engin
         <td className="px-4 py-3 text-gray-600 text-sm">{formatDate(feature.start_date) || '—'}</td>
         <td className="px-4 py-3 text-gray-600 text-sm">{formatDate(feature.end_date) || '—'}</td>
         <td className="px-4 py-3 text-gray-600">{feature.dev_hours ?? '—'}</td>
+        <td className="px-4 py-3 text-gray-600 text-sm">{feature.accuracy ? `${feature.accuracy.toFixed(1)}%` : '—'}</td>
         <td className="px-4 py-3">
           {feature.llm_based ? <span className="badge bg-purple-100 text-purple-700">LLM</span> : <span className="text-gray-300">—</span>}
         </td>
