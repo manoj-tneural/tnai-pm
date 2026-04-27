@@ -102,7 +102,6 @@ export default function NewFeatureButton({ productId, engineers }: { productId: 
                     <option value="nlp">NLP</option>
                     <option value="cv">Computer Vision</option>
                     <option value="analytics">Analytics</option>
-                    <option value="testing">Testing</option>
                     <option value="integration">Integration</option>
                     <option value="other">Other</option>
                   </select>
@@ -113,6 +112,7 @@ export default function NewFeatureButton({ productId, engineers }: { productId: 
                     <option value="planned">Planned</option>
                     <option value="in_progress">In Progress</option>
                     <option value="completed">Completed</option>
+                    <option value="testing">Testing</option>
                     <option value="blocked">Blocked</option>
                   </select>
                 </div>

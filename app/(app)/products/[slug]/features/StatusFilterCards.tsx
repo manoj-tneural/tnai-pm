@@ -9,6 +9,7 @@ interface Props {
     completed: number;
     in_progress: number;
     planned: number;
+    testing: number;
   };
   selectedStatus?: string;
   productSlug: string;
@@ -20,6 +21,7 @@ export default function StatusFilterCards({ stats, selectedStatus, productSlug }
     { key: 'completed', label: 'Completed', value: stats.completed, color: 'bg-green-50 hover:bg-green-100 text-green-700', icon: '✅' },
     { key: 'in_progress', label: 'In Progress', value: stats.in_progress, color: 'bg-blue-50 hover:bg-blue-100 text-blue-700', icon: '⚡' },
     { key: 'planned', label: 'Planned', value: stats.planned, color: 'bg-gray-50 hover:bg-gray-100 text-gray-600', icon: '📅' },
+    { key: 'testing', label: 'Testing', value: stats.testing, color: 'bg-purple-50 hover:bg-purple-100 text-purple-700', icon: '🧪' },
   ];
 
   const getUrl = (statusKey: string) => {
@@ -33,7 +35,7 @@ export default function StatusFilterCards({ stats, selectedStatus, productSlug }
   };
 
   return (
-    <div className="grid grid-cols-4 gap-4 mb-6">
+    <div className="grid grid-cols-5 gap-4 mb-6">
       {statusCards.map(s => (
         <Link key={s.key} href={getUrl(s.key)}>
           <div className={clsx(

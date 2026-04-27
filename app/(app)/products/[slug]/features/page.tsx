@@ -36,6 +36,7 @@ export default async function FeaturesPage({ params, searchParams }: { params: {
       completed: allFeatures?.filter((f: any) => f.status === 'completed').length ?? 0,
       in_progress: allFeatures?.filter((f: any) => f.status === 'in_progress').length ?? 0,
       planned: allFeatures?.filter((f: any) => f.status === 'planned').length ?? 0,
+      testing: allFeatures?.filter((f: any) => f.status === 'testing').length ?? 0,
     };
 
     return (
