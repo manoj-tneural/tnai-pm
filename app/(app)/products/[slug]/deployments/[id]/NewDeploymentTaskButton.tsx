@@ -22,10 +22,18 @@ export default function NewDeploymentTaskButton({ deploymentId }: { deploymentId
     e.preventDefault();
     setLoading(true);
     try {
+      // Convert empty date strings to null
+      const payload = {
+        deployment_id: deploymentId,
+        ...form,
+        start_date: form.start_date === '' ? null : form.start_date,
+        end_date: form.end_date === '' ? null : form.end_date,
+      };
+
       const response = await fetch('/api/deployment-tasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deployment_id: deploymentId, ...form }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) throw new Error('Failed to create task');

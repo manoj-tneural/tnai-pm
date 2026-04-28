@@ -37,10 +37,17 @@ export default function EditDeploymentTaskModal({
     e.preventDefault();
     setLoading(true);
     try {
+      // Convert empty date strings to null
+      const payload = {
+        ...form,
+        start_date: form.start_date === '' ? null : form.start_date,
+        end_date: form.end_date === '' ? null : form.end_date,
+      };
+
       const response = await fetch(`/api/deployment-tasks/${task.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) throw new Error('Failed to update task');
