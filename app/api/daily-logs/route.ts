@@ -12,9 +12,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    // UPSERT: Insert if doesn't exist, or update if it does
     const result = await query(
       `INSERT INTO daily_logs (user_id, product_id, log_date, yesterday, today, blockers, created_at)
        VALUES ($1, $2, $3, $4, $5, $6, NOW())
+       ON CONFLICT (user_id, product_id, log_date) 
+       DO UPDATE SET yesterday = $4, today = $5, blockers = $6
        RETURNING *`,
       [user_id, product_id, log_date, yesterday || '', today || '', blockers || '']
     );
