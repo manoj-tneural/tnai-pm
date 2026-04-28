@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { query } from '@/lib/db';
+import { verifyToken } from '@/lib/auth';
 import Sidebar from '@/components/Sidebar';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -16,16 +17,23 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   console.log('[AppLayout] Token found, user authenticated');
 
   try {
-    // Load profile and products for sidebar
+    // Verify token and extract userId
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      console.log('[AppLayout] Invalid token, redirecting to login');
+      redirect('/auth/login');
+    }
+
+    // Load profile and products for sidebar using the userId from token
     const [profileResult, productsResult] = await Promise.all([
-      query('SELECT * FROM profiles LIMIT 1'), // Get current user profile
+      query('SELECT * FROM profiles WHERE id = $1', [decoded.userId]),
       query('SELECT * FROM products ORDER BY name'),
     ]);
 
     const profile = profileResult.rows[0] || null;
     const products = productsResult.rows || [];
 
-    console.log('[AppLayout] Loaded profile and', products.length, 'products');
+    console.log('[AppLayout] Loaded profile for user', decoded.userId, 'and', products.length, 'products');
 
     return (
       <div className="flex min-h-screen">

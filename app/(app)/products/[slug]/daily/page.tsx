@@ -1,7 +1,8 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { query } from '@/lib/db';
+import { verifyToken } from '@/lib/auth';
 import DailyLogForm from './DailyLogForm';
 import DailyLogCard from './DailyLogCard';
 import clsx from 'clsx';
@@ -11,6 +12,10 @@ export default async function DailyPage({ params }: { params: { slug: string } }
   const token = cookieStore.get('auth_token')?.value;
   if (!token) return <div className="p-8 text-red-600">Authentication required</div>;
 
+  // Verify token and get userId
+  const decoded = verifyToken(token);
+  if (!decoded) redirect('/auth/login');
+
   try {
     // First get the product ID
     const productIdResult = await query('SELECT id FROM products WHERE slug = $1', [params.slug]);
@@ -19,7 +24,7 @@ export default async function DailyPage({ params }: { params: { slug: string } }
 
     const [productResult, profileResult, logsResult] = await Promise.all([
       query('SELECT * FROM products WHERE id = $1', [product.id]),
-      query('SELECT * FROM profiles LIMIT 1'),
+      query('SELECT * FROM profiles WHERE id = $1', [decoded.userId]),
       query(`SELECT dl.*, p.full_name, p.role, p.email
              FROM daily_logs dl
              LEFT JOIN profiles p ON dl.user_id = p.id

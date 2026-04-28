@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { query } from '@/lib/db';
+import { verifyToken } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 
 const formatDate = (date: any): string => {
@@ -15,11 +16,15 @@ export default async function GlobalDailyPage() {
 
   if (!token) redirect('/auth/login');
 
+  // Verify token and get userId
+  const decoded = verifyToken(token);
+  if (!decoded) redirect('/auth/login');
+
   // Fetch products, daily logs, and current user profile
   const [productsResult, logsResult, profileResult] = await Promise.all([
     query('SELECT id, name, icon, slug, color FROM products'),
     query('SELECT dl.*, p.full_name, p.role, pr.name, pr.icon, pr.slug, pr.color FROM daily_logs dl JOIN profiles p ON dl.user_id = p.id JOIN products pr ON dl.product_id = pr.id ORDER BY log_date DESC LIMIT 100'),
-    query('SELECT id FROM profiles LIMIT 1'),
+    query('SELECT id FROM profiles WHERE id = $1', [decoded.userId]),
   ]);
 
   const products: Array<any> = productsResult.rows;
