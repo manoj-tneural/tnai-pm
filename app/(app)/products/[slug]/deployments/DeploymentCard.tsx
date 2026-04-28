@@ -8,8 +8,10 @@ import EditDeploymentModal from './EditDeploymentModal';
 
 function formatDate(date: any): string {
   if (!date) return '';
-  const d = new Date(date);
-  return d.toISOString().split('T')[0];
+  if (typeof date === 'string') {
+    return date.includes('T') ? date.split('T')[0] : date;
+  }
+  return new Date(date).toISOString().split('T')[0];
 }
 
 export default function DeploymentCard({ deployment, productSlug }: { deployment: any; productSlug: string }) {

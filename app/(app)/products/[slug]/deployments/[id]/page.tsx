@@ -8,6 +8,14 @@ import TaskStatusToggle from './TaskStatusToggle';
 import NewDeploymentTaskButton from './NewDeploymentTaskButton';
 import DeploymentTaskRow from './DeploymentTaskRow';
 
+function formatDate(date: any): string {
+  if (!date) return '';
+  if (typeof date === 'string') {
+    return date.includes('T') ? date.split('T')[0] : date;
+  }
+  return new Date(date).toISOString().split('T')[0];
+}
+
 export default async function DeploymentDetailPage({ params, searchParams }: { params: { slug: string; id: string }; searchParams: { status?: string } }) {
   const cookieStore = await cookies();
   const token = cookieStore.get('auth_token')?.value;
@@ -66,7 +74,7 @@ export default async function DeploymentDetailPage({ params, searchParams }: { p
             <span className={clsx('badge', STATUS_COLORS.deployment[deployment.status as keyof typeof STATUS_COLORS.deployment])}>
               {deployment.status.replace('_', ' ')}
             </span>
-            {deployment.day0_date && <span className="text-gray-400 text-sm">Day 0: {deployment.day0_date}</span>}
+            {deployment.day0_date && <span className="text-gray-400 text-sm">Day 0: {formatDate(deployment.day0_date)}</span>}
             {deployment.num_stores > 0 && <span className="text-gray-400 text-sm">🏪 {deployment.num_stores} stores</span>}
             {deployment.num_cameras > 0 && <span className="text-gray-400 text-sm">📷 {deployment.num_cameras} cameras</span>}
           </div>
