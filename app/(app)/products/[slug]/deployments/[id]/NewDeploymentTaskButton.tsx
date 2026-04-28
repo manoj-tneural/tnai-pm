@@ -12,6 +12,8 @@ export default function NewDeploymentTaskButton({ deploymentId }: { deploymentId
     owner: '',
     status: 'todo',
     remarks: '',
+    start_date: '',
+    end_date: '',
   });
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -29,7 +31,7 @@ export default function NewDeploymentTaskButton({ deploymentId }: { deploymentId
       if (!response.ok) throw new Error('Failed to create task');
 
       setOpen(false);
-      setForm({ day_label: '', phase: '', task_no: '', task_desc: '', owner: '', status: 'todo', remarks: '' });
+      setForm({ day_label: '', phase: '', task_no: '', task_desc: '', owner: '', status: 'todo', remarks: '', start_date: '', end_date: '' });
       router.refresh();
     } catch (error) {
       console.error('Error:', error);
@@ -114,6 +116,26 @@ export default function NewDeploymentTaskButton({ deploymentId }: { deploymentId
                   <option value="done">Done</option>
                   <option value="blocked">Blocked</option>
                 </select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="label">Start Date</label>
+                  <input
+                    type="date"
+                    className="input"
+                    value={form.start_date}
+                    onChange={(e) => setForm({ ...form, start_date: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="label">End Date</label>
+                  <input
+                    type="date"
+                    className="input"
+                    value={form.end_date}
+                    onChange={(e) => setForm({ ...form, end_date: e.target.value })}
+                  />
+                </div>
               </div>
               <div>
                 <label className="label">Notes</label>

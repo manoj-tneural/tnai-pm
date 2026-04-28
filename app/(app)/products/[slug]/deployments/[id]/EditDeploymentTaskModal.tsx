@@ -19,6 +19,8 @@ export default function EditDeploymentTaskModal({
     owner: task.owner || '',
     status: task.status || 'todo',
     remarks: task.remarks || '',
+    start_date: task.start_date ? task.start_date.split('T')[0] : '',
+    end_date: task.end_date ? task.end_date.split('T')[0] : '',
   });
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -112,6 +114,26 @@ export default function EditDeploymentTaskModal({
               <option value="done">Done</option>
               <option value="blocked">Blocked</option>
             </select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="label">Start Date</label>
+              <input
+                type="date"
+                className="input"
+                value={form.start_date}
+                onChange={(e) => setForm({ ...form, start_date: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="label">End Date</label>
+              <input
+                type="date"
+                className="input"
+                value={form.end_date}
+                onChange={(e) => setForm({ ...form, end_date: e.target.value })}
+              />
+            </div>
           </div>
           <div>
             <label className="label">Notes</label>

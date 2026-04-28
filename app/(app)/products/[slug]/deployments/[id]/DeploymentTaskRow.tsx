@@ -51,6 +51,10 @@ export default function DeploymentTaskRow({ task: initialTask, product }: { task
               {task.task_desc}
             </span>
           </div>
+          <div className="flex items-center gap-3 mt-1 ml-8 text-xs text-gray-500">
+            {task.start_date && <span>📅 {task.start_date.split('T')[0]}</span>}
+            {task.end_date && <span>→ {task.end_date.split('T')[0]}</span>}
+          </div>
           {task.remarks && <p className="text-xs text-gray-400 mt-0.5 ml-8">{task.remarks}</p>}
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
