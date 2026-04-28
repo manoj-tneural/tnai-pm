@@ -2,6 +2,14 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+function formatDateForInput(date: any): string {
+  if (!date) return '';
+  if (typeof date === 'string') {
+    return date.includes('T') ? date.split('T')[0] : date;
+  }
+  return new Date(date).toISOString().split('T')[0];
+}
+
 export default function EditDeploymentTaskModal({ 
   task, 
   onClose, 
@@ -19,8 +27,8 @@ export default function EditDeploymentTaskModal({
     owner: task.owner || '',
     status: task.status || 'todo',
     remarks: task.remarks || '',
-    start_date: task.start_date ? task.start_date.split('T')[0] : '',
-    end_date: task.end_date ? task.end_date.split('T')[0] : '',
+    start_date: formatDateForInput(task.start_date),
+    end_date: formatDateForInput(task.end_date),
   });
   const [loading, setLoading] = useState(false);
   const router = useRouter();

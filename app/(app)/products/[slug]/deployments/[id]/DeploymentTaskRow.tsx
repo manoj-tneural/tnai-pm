@@ -6,6 +6,14 @@ import clsx from 'clsx';
 import TaskStatusToggle from './TaskStatusToggle';
 import EditDeploymentTaskModal from './EditDeploymentTaskModal';
 
+function formatDate(date: any): string {
+  if (!date) return '';
+  if (typeof date === 'string') {
+    return date.includes('T') ? date.split('T')[0] : date;
+  }
+  return new Date(date).toISOString().split('T')[0];
+}
+
 export default function DeploymentTaskRow({ task: initialTask, product }: { task: any; product: any }) {
   const [task, setTask] = useState(initialTask);
   const [editing, setEditing] = useState(false);
@@ -52,8 +60,8 @@ export default function DeploymentTaskRow({ task: initialTask, product }: { task
             </span>
           </div>
           <div className="flex items-center gap-3 mt-1 ml-8 text-xs text-gray-500">
-            {task.start_date && <span>📅 {task.start_date.split('T')[0]}</span>}
-            {task.end_date && <span>→ {task.end_date.split('T')[0]}</span>}
+            {task.start_date && <span>📅 {formatDate(task.start_date)}</span>}
+            {task.end_date && <span>→ {formatDate(task.end_date)}</span>}
           </div>
           {task.remarks && <p className="text-xs text-gray-400 mt-0.5 ml-8">{task.remarks}</p>}
         </div>
