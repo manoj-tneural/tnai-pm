@@ -12,14 +12,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const insertQuery = `INSERT INTO features (product_id, feature_id, name, category, status, dev_hours, llm_based, pre_trained, deployment_type, cost, accuracy, requirements, notes, sort_order, start_date, end_date, assigned_to, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, NOW())
+    const insertQuery = `INSERT INTO features (product_id, feature_id, name, category, status, dev_hours, llm_based, pre_trained, deployment_type, cost, accuracy, requirements, notes, sort_order, start_date, end_date, assigned_to)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
        RETURNING *`;
     
     const insertValues = [product_id, feature_id, name, category, status || 'planned', dev_hours, llm_based || false, pre_trained, deployment_type, cost, accuracy || null, requirements, notes, sort_order || 0, start_date || null, end_date || null, assigned_to || null];
     
     console.log('[Features API] INSERT Query:', insertQuery);
-    console.log('[Features API] Column count: 18 (product_id, feature_id, name, category, status, dev_hours, llm_based, pre_trained, deployment_type, cost, accuracy, requirements, notes, sort_order, start_date, end_date, assigned_to, created_at)');
+    console.log('[Features API] Column count: 17 (product_id, feature_id, name, category, status, dev_hours, llm_based, pre_trained, deployment_type, cost, accuracy, requirements, notes, sort_order, start_date, end_date, assigned_to)');
     console.log('[Features API] Value count:', insertValues.length);
     console.log('[Features API] Values:', insertValues);
 
