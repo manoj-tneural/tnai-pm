@@ -22,6 +22,7 @@ export default function EditFeatureModal({ feature, onClose, engineers }: { feat
     notes: feature.notes || '',
     start_date: formatDateForInput(feature.start_date),
     end_date: formatDateForInput(feature.end_date),
+    actual_end_date: formatDateForInput(feature.actual_end_date),
     assigned_to: (feature.assigned_to && Array.isArray(feature.assigned_to)) ? feature.assigned_to : [],
   });
   const [loading, setLoading] = useState(false);
@@ -58,6 +59,7 @@ export default function EditFeatureModal({ feature, onClose, engineers }: { feat
           notes: form.notes || null,
           start_date: form.start_date || null,
           end_date: form.end_date || null,
+          actual_end_date: form.actual_end_date || null,
           assigned_to: form.assigned_to.length > 0 ? form.assigned_to : null,
         }),
       });
@@ -115,13 +117,17 @@ export default function EditFeatureModal({ feature, onClose, engineers }: { feat
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="label">Start Date</label>
+              <label className="label">Start Date (Planned)</label>
               <input type="date" className="input" value={form.start_date} onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))} />
             </div>
             <div>
-              <label className="label">End Date</label>
+              <label className="label">End Date (Planned)</label>
               <input type="date" className="input" value={form.end_date} onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))} />
             </div>
+          </div>
+          <div>
+            <label className="label">Actual End Date</label>
+            <input type="date" className="input" value={form.actual_end_date} onChange={e => setForm(f => ({ ...f, actual_end_date: e.target.value }))} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>

@@ -19,6 +19,7 @@ export default function EditDevTaskModal({ task, onClose, engineers }: { task: a
     status: task.status,
     planned_start: formatDateForInput(task.planned_start),
     planned_end: formatDateForInput(task.planned_end),
+    actual_end_date: formatDateForInput(task.actual_end_date),
     assigned_to: (task.assigned_to && Array.isArray(task.assigned_to)) ? task.assigned_to : [],
   });
   const [loading, setLoading] = useState(false);
@@ -52,6 +53,7 @@ export default function EditDevTaskModal({ task, onClose, engineers }: { task: a
           status: form.status,
           planned_start: form.planned_start || null,
           planned_end: form.planned_end || null,
+          actual_end_date: form.actual_end_date || null,
           assigned_to: form.assigned_to.length > 0 ? form.assigned_to : null,
         }),
       });
@@ -102,6 +104,10 @@ export default function EditDevTaskModal({ task, onClose, engineers }: { task: a
               <label className="label">Planned End</label>
               <input type="date" className="input" value={form.planned_end} onChange={e => setForm(f => ({ ...f, planned_end: e.target.value }))} />
             </div>
+          </div>
+          <div>
+            <label className="label">Actual End Date</label>
+            <input type="date" className="input" value={form.actual_end_date} onChange={e => setForm(f => ({ ...f, actual_end_date: e.target.value }))} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
