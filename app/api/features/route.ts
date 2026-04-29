@@ -12,16 +12,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const result = await query(
-      `INSERT INTO features (product_id, feature_id, name, category, status, dev_hours, llm_based, pre_trained, deployment_type, cost, accuracy, requirements, notes, sort_order, start_date, end_date, assigned_to, created_at)
+    const insertQuery = `INSERT INTO features (product_id, feature_id, name, category, status, dev_hours, llm_based, pre_trained, deployment_type, cost, accuracy, requirements, notes, sort_order, start_date, end_date, assigned_to, created_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, NOW())
-       RETURNING *`,
-      [product_id, feature_id, name, category, status || 'planned', dev_hours, llm_based || false, pre_trained, deployment_type, cost, accuracy || null, requirements, notes, sort_order || 0, start_date || null, end_date || null, assigned_to || null]
-    );
+       RETURNING *`;
+    
+    const insertValues = [product_id, feature_id, name, category, status || 'planned', dev_hours, llm_based || false, pre_trained, deployment_type, cost, accuracy || null, requirements, notes, sort_order || 0, start_date || null, end_date || null, assigned_to || null];
+    
+    console.log('[Features API] INSERT Query:', insertQuery);
+    console.log('[Features API] Column count: 18 (product_id, feature_id, name, category, status, dev_hours, llm_based, pre_trained, deployment_type, cost, accuracy, requirements, notes, sort_order, start_date, end_date, assigned_to, created_at)');
+    console.log('[Features API] Value count:', insertValues.length);
+    console.log('[Features API] Values:', insertValues);
+
+    const result = await query(insertQuery, insertValues);
 
     return NextResponse.json({ feature: result.rows[0] }, { status: 201 });
   } catch (error) {
     console.error('[Features API] POST error:', error);
+    if (error instanceof Error) {
+      console.error('[Features API] Error message:', error.message);
+      console.error('[Features API] Error stack:', error.stack);
+    }
     return NextResponse.json({ error: error instanceof Error ? error.message : 'Failed to create feature' }, { status: 500 });
   }
 }

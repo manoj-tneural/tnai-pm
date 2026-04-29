@@ -12,12 +12,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields: product_id, sub_task' }, { status: 400 });
     }
 
-    const result = await query(
-      `INSERT INTO dev_tasks (product_id, phase, task_id, sub_task, description, dev_hours, planned_start, planned_end, status, assignee_id, created_at)
+    const insertQuery = `INSERT INTO dev_tasks (product_id, phase, task_id, sub_task, description, dev_hours, planned_start, planned_end, status, assignee_id, created_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
-       RETURNING *`,
-      [product_id, phase, task_id, sub_task, description, dev_hours, planned_start || null, planned_end || null, status || 'todo', assignee_id || null]
-    );
+       RETURNING *`;
+    
+    const insertValues = [product_id, phase, task_id, sub_task, description, dev_hours, planned_start || null, planned_end || null, status || 'todo', assignee_id || null];
+    
+    console.log('[Dev Tasks API] INSERT Query:', insertQuery);
+    console.log('[Dev Tasks API] Column count: 11 (product_id, phase, task_id, sub_task, description, dev_hours, planned_start, planned_end, status, assignee_id, created_at)');
+    console.log('[Dev Tasks API] Value count:', insertValues.length);
+    console.log('[Dev Tasks API] Values:', insertValues);
+
+    const result = await query(insertQuery, insertValues);
 
     return NextResponse.json({ task: result.rows[0] }, { status: 201 });
   } catch (error) {
