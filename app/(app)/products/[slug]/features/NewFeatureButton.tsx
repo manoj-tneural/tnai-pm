@@ -16,6 +16,9 @@ export default function NewFeatureButton({ productId, engineers }: { productId: 
     notes: '',
     start_date: '',
     end_date: '',
+    llm_based: false,
+    pre_trained: '',
+    deployment_type: '',
     assigned_to: [] as string[],
   });
   const [loading, setLoading] = useState(false);
@@ -49,6 +52,9 @@ export default function NewFeatureButton({ productId, engineers }: { productId: 
           dev_hours: form.dev_hours ? parseInt(form.dev_hours) : 0,
           cost: form.cost ? parseInt(form.cost) : 0,
           accuracy: form.accuracy ? parseFloat(form.accuracy) : null,
+          llm_based: form.llm_based,
+          pre_trained: form.pre_trained || null,
+          deployment_type: form.deployment_type || null,
           requirements: form.requirements || null,
           notes: form.notes || null,
           start_date: form.start_date || null,
@@ -75,6 +81,9 @@ export default function NewFeatureButton({ productId, engineers }: { productId: 
         notes: '',
         start_date: '',
         end_date: '',
+        llm_based: false,
+        pre_trained: '',
+        deployment_type: '',
         assigned_to: [],
       });
       router.refresh();
