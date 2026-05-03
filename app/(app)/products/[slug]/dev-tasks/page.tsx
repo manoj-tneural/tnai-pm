@@ -146,6 +146,7 @@ export default async function DevTasksPage({ params, searchParams }: { params: {
                     <th className="text-left px-4 py-3 text-gray-600 font-semibold w-16">Hours</th>
                     <th className="text-left px-4 py-3 text-gray-600 font-semibold w-24">Start</th>
                     <th className="text-left px-4 py-3 text-gray-600 font-semibold w-24">End</th>
+                    <th className="text-left px-4 py-3 text-gray-600 font-semibold w-28">Actual End</th>
                     <th className="text-left px-4 py-3 text-gray-600 font-semibold w-32">Assigned</th>
                     <th className="text-left px-4 py-3 text-gray-600 font-semibold w-20">Actions</th>
                   </tr>

@@ -85,6 +85,7 @@ export default function DevTaskRow({ task, engineers }: { task: any; engineers: 
         <td className="px-4 py-3 text-gray-500">{task.dev_hours ? `${task.dev_hours}h` : '—'}</td>
         <td className="px-4 py-3 text-gray-500 text-xs">{formatDate(task.planned_start)}</td>
         <td className="px-4 py-3 text-gray-500 text-xs">{formatDate(task.planned_end)}</td>
+        <td className="px-4 py-3 text-gray-500 text-xs">{formatDate(task.actual_end_date) ? <span className="bg-green-100 text-green-800 px-2 py-1 rounded">{formatDate(task.actual_end_date)}</span> : '—'}</td>
         <td className="px-4 py-3">
           <div className="text-xs max-w-xs">
             {assignedEngineers.length > 0 ? (
