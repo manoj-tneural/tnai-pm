@@ -62,6 +62,7 @@ export default function DeploymentTaskRow({ task: initialTask, product }: { task
           <div className="flex items-center gap-3 mt-1 ml-8 text-xs text-gray-500">
             {task.start_date && <span>📅 {formatDate(task.start_date)}</span>}
             {task.end_date && <span>→ {formatDate(task.end_date)}</span>}
+            {task.actual_end_date && <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded">✓ {formatDate(task.actual_end_date)}</span>}
           </div>
           {task.remarks && <p className="text-xs text-gray-400 mt-0.5 ml-8">{task.remarks}</p>}
         </div>

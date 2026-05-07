@@ -29,6 +29,7 @@ export default function EditDeploymentTaskModal({
     remarks: task.remarks || '',
     start_date: formatDateForInput(task.start_date),
     end_date: formatDateForInput(task.end_date),
+    actual_end_date: formatDateForInput(task.actual_end_date),
   });
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -42,6 +43,7 @@ export default function EditDeploymentTaskModal({
         ...form,
         start_date: form.start_date === '' ? null : form.start_date,
         end_date: form.end_date === '' ? null : form.end_date,
+        actual_end_date: form.actual_end_date === '' ? null : form.actual_end_date,
       };
 
       const response = await fetch(`/api/deployment-tasks/${task.id}`, {
@@ -130,7 +132,7 @@ export default function EditDeploymentTaskModal({
               <option value="blocked">Blocked</option>
             </select>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="label">Start Date</label>
               <input
@@ -147,6 +149,15 @@ export default function EditDeploymentTaskModal({
                 className="input"
                 value={form.end_date}
                 onChange={(e) => setForm({ ...form, end_date: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="label">Actual End Date</label>
+              <input
+                type="date"
+                className="input"
+                value={form.actual_end_date}
+                onChange={(e) => setForm({ ...form, actual_end_date: e.target.value })}
               />
             </div>
           </div>
