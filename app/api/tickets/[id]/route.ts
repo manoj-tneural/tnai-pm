@@ -39,8 +39,17 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
     }
 
+    // Convert empty strings to NULL for date fields
+    const dateFields = ['due_date', 'actual_end_date'];
+    const processedUpdates = { ...updates };
+    dateFields.forEach(field => {
+      if (field in processedUpdates && processedUpdates[field] === '') {
+        processedUpdates[field] = null;
+      }
+    });
+
     const setClause = fields.map((f, i) => `${f} = $${i + 1}`).join(', ');
-    const values = fields.map(f => updates[f]);
+    const values = fields.map(f => processedUpdates[f]);
 
     const result = await query(
       `UPDATE tickets SET ${setClause}, updated_at = NOW() WHERE id = $${fields.length + 1} RETURNING *`,
@@ -56,7 +65,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       try {
         for (const field of fields) {
           const oldValue = currentTicket[field];
-          const newValue = updates[field];
+          const newValue = processedUpdates[field];
 
           // Only log if value actually changed
           if (oldValue !== newValue) {
