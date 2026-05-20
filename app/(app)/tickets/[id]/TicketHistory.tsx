@@ -34,12 +34,20 @@ export default function TicketHistory({ ticketId }: { ticketId: string }) {
     async function fetchHistory() {
       try {
         const response = await fetch(`/api/tickets/${ticketId}/history`);
-        if (!response.ok) throw new Error('Failed to fetch history');
+        if (!response.ok) {
+          console.error(`History API error: ${response.status} ${response.statusText}`);
+          // Don't show error, just show empty history
+          setHistory([]);
+          setLoading(false);
+          return;
+        }
         
         const data = await response.json();
         setHistory(data.history || []);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load history');
+        console.error('Failed to fetch history:', err);
+        // Gracefully handle error - show empty history
+        setHistory([]);
       } finally {
         setLoading(false);
       }

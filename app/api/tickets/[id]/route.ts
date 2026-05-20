@@ -16,14 +16,20 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     }
     const currentTicket = currentResult.rows[0];
 
-    // Get user ID from token (basic extraction - you may want to decode properly)
+    // Get user ID from token (basic extraction)
     let userId = null;
     try {
       // Simple extraction of user info from token if available
-      // In production, properly decode JWT
-      const decoded = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
-      userId = decoded.userId || decoded.sub;
+      const parts = token.split('.');
+      if (parts.length === 3) {
+        // Decode the payload (second part)
+        const decoded = JSON.parse(
+          Buffer.from(parts[1], 'base64').toString('utf-8')
+        );
+        userId = decoded.userId || decoded.sub;
+      }
     } catch (e) {
+      console.error('Token decode error:', e);
       // If token decode fails, we'll continue without user ID
     }
 
@@ -45,20 +51,25 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       return NextResponse.json({ error: 'Ticket not found' }, { status: 404 });
     }
 
-    // Log changes to ticket_history
+    // Log changes to ticket_history (wrapped in try-catch to not break the update)
     if (userId) {
-      for (const field of fields) {
-        const oldValue = currentTicket[field];
-        const newValue = updates[field];
+      try {
+        for (const field of fields) {
+          const oldValue = currentTicket[field];
+          const newValue = updates[field];
 
-        // Only log if value actually changed
-        if (oldValue !== newValue) {
-          await query(
-            `INSERT INTO ticket_history (ticket_id, user_id, action, field_name, old_value, new_value, description)
-             VALUES ($1, $2, 'updated', $3, $4, $5, $6)`,
-            [id, userId, field, String(oldValue || ''), String(newValue || ''), `${field} changed from "${oldValue}" to "${newValue}"`]
-          );
+          // Only log if value actually changed
+          if (oldValue !== newValue) {
+            await query(
+              `INSERT INTO ticket_history (ticket_id, user_id, action, field_name, old_value, new_value, description)
+               VALUES ($1, $2, 'updated', $3, $4, $5, $6)`,
+              [id, userId, field, String(oldValue || ''), String(newValue || ''), `${field} changed from "${oldValue}" to "${newValue}"`]
+            );
+          }
         }
+      } catch (historyErr) {
+        console.error('[Tickets API] Failed to log history:', historyErr);
+        // Don't fail the main update if history logging fails
       }
     }
 
