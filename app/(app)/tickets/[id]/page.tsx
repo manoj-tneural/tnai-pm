@@ -173,7 +173,7 @@ export default async function TicketDetailPage({ params }: { params: { id: strin
                 <div>
                   <dt className="text-gray-500 text-xs font-semibold uppercase tracking-wide mb-1">Due Date</dt>
                   <dd className={clsx(new Date(ticket.due_date) < new Date() ? 'text-red-600 font-medium' : '')}>
-                    {ticket.due_date}
+                    {formatDate(ticket.due_date)}
                   </dd>
                 </div>
               )}
@@ -181,7 +181,7 @@ export default async function TicketDetailPage({ params }: { params: { id: strin
                 <div>
                   <dt className="text-gray-500 text-xs font-semibold uppercase tracking-wide mb-1">Actual End Date</dt>
                   <dd className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium inline-block">
-                    ✓ {ticket.actual_end_date}
+                    ✓ {formatDate(ticket.actual_end_date)}
                   </dd>
                 </div>
               )}

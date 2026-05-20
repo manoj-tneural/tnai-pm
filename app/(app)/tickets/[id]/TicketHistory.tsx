@@ -16,7 +16,7 @@ interface HistoryEntry {
 function formatDate(date: any): string {
   if (!date) return '';
   const d = new Date(date);
-  return d.toLocaleDateString('en-US', { 
+  return d.toLocaleString('en-US', { 
     year: 'numeric', 
     month: 'short', 
     day: 'numeric',
