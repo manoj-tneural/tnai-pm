@@ -192,11 +192,11 @@ export default async function TicketDetailPage({ params }: { params: { id: strin
             </dl>
           </div>
 
-          {/* History */}
+          {/* History 
           <div className="card p-5">
             <h3 className="font-bold text-gray-900 mb-4">📋 Action History</h3>
             <TicketHistory ticketId={ticket.id} />
-          </div>
+          </div>*/}
 
           {/* Actions */}
           {canEdit && (
