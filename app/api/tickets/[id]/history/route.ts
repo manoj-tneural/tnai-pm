@@ -6,6 +6,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     const token = request.cookies.get('auth_token')?.value;
     if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+    console.log('[History API] GET - Fetching history for ticket:', params.id);
     const result = await query(
       `SELECT th.*, p.full_name, p.role
        FROM ticket_history th
@@ -15,10 +16,12 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       [params.id]
     );
 
+    console.log('[History API] GET - Found', result.rows.length, 'history entries');
     return NextResponse.json({ history: result.rows }, { status: 200 });
   } catch (error) {
     console.error('[Ticket History API] GET error:', error);
-    return NextResponse.json({ error: 'Failed to fetch history' }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch history';
+    return NextResponse.json({ error: errorMessage, details: String(error) }, { status: 500 });
   }
 }
 

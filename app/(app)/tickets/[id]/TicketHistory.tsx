@@ -33,9 +33,12 @@ export default function TicketHistory({ ticketId }: { ticketId: string }) {
   useEffect(() => {
     async function fetchHistory() {
       try {
+        console.log('[TicketHistory] Fetching history for ticket:', ticketId);
         const response = await fetch(`/api/tickets/${ticketId}/history`);
+        console.log('[TicketHistory] Response status:', response.status);
+        
         if (!response.ok) {
-          console.error(`History API error: ${response.status} ${response.statusText}`);
+          console.error(`[TicketHistory] API error: ${response.status} ${response.statusText}`);
           // Don't show error, just show empty history
           setHistory([]);
           setLoading(false);
@@ -43,9 +46,10 @@ export default function TicketHistory({ ticketId }: { ticketId: string }) {
         }
         
         const data = await response.json();
+        console.log('[TicketHistory] Received data:', data);
         setHistory(data.history || []);
       } catch (err) {
-        console.error('Failed to fetch history:', err);
+        console.error('[TicketHistory] Failed to fetch history:', err);
         // Gracefully handle error - show empty history
         setHistory([]);
       } finally {
