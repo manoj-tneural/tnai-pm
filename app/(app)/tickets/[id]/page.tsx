@@ -42,14 +42,33 @@ export default async function TicketDetailPage({ params }: { params: { id: strin
       query('SELECT id, name, icon, slug FROM products'),
     ]);
 
-    const ticket: any = ticketResult.rows[0];
+    const ticketData: any = ticketResult.rows[0];
     const comments: Array<any> = commentsResult.rows;
     const engineers: Array<any> = engineersResult.rows;
     const user: any = profileResult.rows[0];
     const products: Array<any> = productsResult.rows;
     const userId = user?.id;
     
-    if (!ticket) notFound();
+    if (!ticketData) notFound();
+
+    // Restructure flat query result into nested objects
+    const ticket = {
+      ...ticketData,
+      products: {
+        name: ticketData.product_name,
+        icon: ticketData.icon,
+        slug: ticketData.slug,
+        color: ticketData.color,
+      },
+      reporter: {
+        full_name: ticketData.reporter_full_name,
+        role: ticketData.reporter_role,
+      },
+      assignee: {
+        full_name: ticketData.assignee_full_name,
+        role: ticketData.assignee_role,
+      },
+    };
 
     const canEdit = user?.role === 'management' || user?.role === 'project_manager' ||
       ticket.reporter_id === userId || ticket.assignee_id === userId;
