@@ -6,6 +6,7 @@ import { STATUS_COLORS } from '@/lib/types';
 import clsx from 'clsx';
 import TicketActions from './TicketActions';
 import CommentBox from './CommentBox';
+import TicketHistory from './TicketHistory';
 
 const TYPE_ICON: Record<string, string> = { bug: '🐛', feature: '✨', improvement: '⚡', task: '📋', question: '❓' };
 const PRIORITY_ICON: Record<string, string> = { critical: '🔴', high: '🟠', medium: '🟡', low: '🟢' };
@@ -157,11 +158,25 @@ export default async function TicketDetailPage({ params }: { params: { id: strin
                   </dd>
                 </div>
               )}
+              {ticket.actual_end_date && (
+                <div>
+                  <dt className="text-gray-500 text-xs font-semibold uppercase tracking-wide mb-1">Actual End Date</dt>
+                  <dd className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium inline-block">
+                    ✓ {ticket.actual_end_date}
+                  </dd>
+                </div>
+              )}
               <div>
                 <dt className="text-gray-500 text-xs font-semibold uppercase tracking-wide mb-1">Created</dt>
                 <dd className="text-gray-500">{formatDate(ticket.created_at)}</dd>
               </div>
             </dl>
+          </div>
+
+          {/* History */}
+          <div className="card p-5">
+            <h3 className="font-bold text-gray-900 mb-4">📋 Action History</h3>
+            <TicketHistory ticketId={ticket.id} />
           </div>
 
           {/* Actions */}

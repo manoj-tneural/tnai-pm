@@ -69,6 +69,7 @@ export default function TicketRow({ ticket, products, engineers }: TicketRowProp
           {ticket.assignee_full_name ? <span>{ticket.assignee_full_name}</span> : <span className="text-gray-300">Unassigned</span>}
         </td>
         <td className="px-4 py-3 text-gray-400 text-xs">{formatDate(ticket.created_at)}</td>
+        <td className="px-4 py-3 text-gray-600 text-sm">{ticket.actual_end_date ? <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">✓ {formatDate(ticket.actual_end_date)}</span> : '—'}</td>
         <td className="px-4 py-3 flex gap-2">
           <button
             onClick={() => setEditing(true)}

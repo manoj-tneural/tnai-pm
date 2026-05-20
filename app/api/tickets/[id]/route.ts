@@ -9,6 +9,24 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     const updates = await request.json();
     const { id } = params;
 
+    // Get current ticket data for logging changes
+    const currentResult = await query('SELECT * FROM tickets WHERE id = $1', [id]);
+    if (currentResult.rows.length === 0) {
+      return NextResponse.json({ error: 'Ticket not found' }, { status: 404 });
+    }
+    const currentTicket = currentResult.rows[0];
+
+    // Get user ID from token (basic extraction - you may want to decode properly)
+    let userId = null;
+    try {
+      // Simple extraction of user info from token if available
+      // In production, properly decode JWT
+      const decoded = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+      userId = decoded.userId || decoded.sub;
+    } catch (e) {
+      // If token decode fails, we'll continue without user ID
+    }
+
     // Filter out protected fields
     const fields = Object.keys(updates).filter(k => k !== 'id' && k !== 'reporter_id' && k !== 'created_at');
     if (fields.length === 0) {
@@ -25,6 +43,23 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 
     if (result.rows.length === 0) {
       return NextResponse.json({ error: 'Ticket not found' }, { status: 404 });
+    }
+
+    // Log changes to ticket_history
+    if (userId) {
+      for (const field of fields) {
+        const oldValue = currentTicket[field];
+        const newValue = updates[field];
+
+        // Only log if value actually changed
+        if (oldValue !== newValue) {
+          await query(
+            `INSERT INTO ticket_history (ticket_id, user_id, action, field_name, old_value, new_value, description)
+             VALUES ($1, $2, 'updated', $3, $4, $5, $6)`,
+            [id, userId, field, String(oldValue || ''), String(newValue || ''), `${field} changed from "${oldValue}" to "${newValue}"`]
+          );
+        }
+      }
     }
 
     return NextResponse.json({ ticket: result.rows[0] }, { status: 200 });

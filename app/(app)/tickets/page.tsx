@@ -136,6 +136,7 @@ export default async function TicketsPage({
               <th className="text-left px-4 py-3 text-gray-600 font-semibold w-28">Product</th>
               <th className="text-left px-4 py-3 text-gray-600 font-semibold w-24">Assignee</th>
               <th className="text-left px-4 py-3 text-gray-600 font-semibold w-20">Created</th>
+              <th className="text-left px-4 py-3 text-gray-600 font-semibold w-28">Actual End</th>
               <th className="text-left px-4 py-3 text-gray-600 font-semibold w-16">Actions</th>
             </tr>
           </thead>
