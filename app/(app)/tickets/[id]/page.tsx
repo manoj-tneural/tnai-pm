@@ -22,6 +22,20 @@ export default async function TicketDetailPage({ params }: { params: { id: strin
   const token = cookieStore.get('auth_token')?.value;
   if (!token) return <div className="p-8 text-red-600">Authentication required</div>;
 
+  // Extract logged-in user ID from JWT token
+  let loggedInUserId: string | null = null;
+  try {
+    const parts = token.split('.');
+    if (parts.length === 3) {
+      const decoded = JSON.parse(
+        Buffer.from(parts[1], 'base64').toString('utf-8')
+      );
+      loggedInUserId = decoded.userId || decoded.sub;
+    }
+  } catch (e) {
+    console.error('Token decode error:', e);
+  }
+
   try {
     const [ticketResult, commentsResult, engineersResult, profileResult, productsResult] = await Promise.all([
       query(`SELECT t.*, p.name as product_name, p.icon, p.slug, p.color,
@@ -38,7 +52,7 @@ export default async function TicketDetailPage({ params }: { params: { id: strin
              WHERE c.ticket_id = $1
              ORDER BY c.created_at`, [params.id]),
       query(`SELECT id, full_name, role FROM profiles WHERE role IN ($1, $2, $3)`, ['engineer', 'project_manager', 'management']),
-      query('SELECT * FROM profiles LIMIT 1'),
+      loggedInUserId ? query('SELECT * FROM profiles WHERE id = $1', [loggedInUserId]) : { rows: [] },
       query('SELECT id, name, icon, slug FROM products'),
     ]);
 
@@ -47,7 +61,7 @@ export default async function TicketDetailPage({ params }: { params: { id: strin
     const engineers: Array<any> = engineersResult.rows;
     const user: any = profileResult.rows[0];
     const products: Array<any> = productsResult.rows;
-    const userId = user?.id;
+    const userId = loggedInUserId || user?.id;
     
     if (!ticketData) notFound();
 
