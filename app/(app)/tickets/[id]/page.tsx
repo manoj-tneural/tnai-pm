@@ -6,6 +6,7 @@ import { STATUS_COLORS } from '@/lib/types';
 import clsx from 'clsx';
 import TicketActions from './TicketActions';
 import CommentBox from './CommentBox';
+import CommentItem from './CommentItem';
 import TicketHistory from './TicketHistory';
 
 const TYPE_ICON: Record<string, string> = { bug: '🐛', feature: '✨', improvement: '⚡', task: '📋', question: '❓' };
@@ -134,19 +135,11 @@ export default async function TicketDetailPage({ params }: { params: { id: strin
             </h3>
             <div className="space-y-4 mb-6">
               {(comments ?? []).map(c => (
-                <div key={c.id} className="flex gap-3">
-                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                    {(c.full_name ?? 'U')[0].toUpperCase()}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-medium text-sm text-gray-900">{c.full_name}</span>
-                      <span className="text-gray-400 text-xs">{c.role}</span>
-                      <span className="text-gray-400 text-xs">{formatDate(c.created_at)}</span>
-                    </div>
-                    <p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3 whitespace-pre-wrap">{c.comment}</p>
-                  </div>
-                </div>
+                <CommentItem
+                  key={c.id}
+                  comment={c}
+                  currentUserId={userId || ''}
+                />
               ))}
               {(comments ?? []).length === 0 && (
                 <p className="text-gray-400 text-sm">No comments yet.</p>
