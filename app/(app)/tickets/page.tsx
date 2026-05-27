@@ -5,6 +5,7 @@ import { STATUS_COLORS } from '@/lib/types';
 import clsx from 'clsx';
 import NewTicketButton from './NewTicketButton';
 import TicketRow from './TicketRow';
+import TicketSearch from './TicketSearch';
 
 const formatDate = (date: any): string => {
   if (!date) return '';
@@ -15,7 +16,7 @@ const formatDate = (date: any): string => {
 export default async function TicketsPage({
   searchParams,
 }: {
-  searchParams: { status?: string; priority?: string; product?: string };
+  searchParams: { status?: string; priority?: string; product?: string; search?: string };
 }) {
   const cookieStore = await cookies();
   const token = cookieStore.get('auth_token')?.value;
@@ -31,6 +32,13 @@ export default async function TicketsPage({
       LEFT JOIN profiles assignee ON tickets.assignee_id = assignee.id
       WHERE 1=1`;
     const params: any[] = [];
+
+    // Search by ticket number, title, or description
+    if (searchParams.search) {
+      ticketQuery += ` AND (tickets.ticket_number::text ILIKE $${params.length + 1} OR tickets.title ILIKE $${params.length + 2} OR tickets.description ILIKE $${params.length + 3})`;
+      const searchTerm = `%${searchParams.search}%`;
+      params.push(searchTerm, searchTerm, searchTerm);
+    }
 
     if (searchParams.status) {
       ticketQuery += ` AND tickets.status = $${params.length + 1}`;
@@ -97,6 +105,7 @@ export default async function TicketsPage({
 
       {/* Filter bar */}
       <div className="flex items-center gap-3 mb-4 flex-wrap">
+        <TicketSearch />
         <span className="text-sm text-gray-500 font-medium">Filter:</span>
         {['open', 'in_progress', 'in_review', 'resolved', 'closed'].map(s => (
           <Link

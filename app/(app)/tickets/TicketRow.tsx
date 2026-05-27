@@ -50,6 +50,7 @@ export default function TicketRow({ ticket, products, engineers }: TicketRowProp
       <tr className="hover:bg-gray-50 transition-colors">
         <td className="px-4 py-3 text-sm">
           <Link href={`/tickets/${ticket.id}`} className="font-medium text-gray-900 hover:text-blue-600">
+            <span className="text-gray-400 text-xs mr-2">#{ticket.ticket_number}</span>
             {TYPE_ICON[ticket.type]} {ticket.title}
           </Link>
           {ticket.description && <div className="text-gray-400 text-xs mt-0.5 line-clamp-1">{ticket.description}</div>}
