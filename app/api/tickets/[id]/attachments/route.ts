@@ -75,7 +75,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const result = await query(
-      `SELECT * FROM ticket_attachments WHERE ticket_id = $1 ORDER BY created_at DESC`,
+      `SELECT ta.*, p.full_name as uploaded_by_name
+       FROM ticket_attachments ta
+       LEFT JOIN profiles p ON ta.uploaded_by = p.id
+       WHERE ta.ticket_id = $1
+       ORDER BY ta.created_at DESC`,
       [params.id]
     );
 

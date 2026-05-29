@@ -30,6 +30,8 @@ export default function EditTicketModal({ ticket, onClose, products, engineers }
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [uploadSuccess, setUploadSuccess] = useState('');
   const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent) {
@@ -55,6 +57,46 @@ export default function EditTicketModal({ ticket, onClose, products, engineers }
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const file = files[0];
+
+    // Validation
+    if (file.size > 10 * 1024 * 1024) {
+      setError('File size must be less than 10MB');
+      return;
+    }
+
+    setUploadingFile(true);
+    setError('');
+    setUploadSuccess('');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch(`/api/tickets/${ticket.id}/attachments`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Upload failed');
+      }
+
+      setUploadSuccess(`✓ ${file.name} uploaded`);
+      e.target.value = ''; // Reset input
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Upload failed');
+    } finally {
+      setUploadingFile(false);
     }
   }
 
@@ -178,6 +220,19 @@ export default function EditTicketModal({ ticket, onClose, products, engineers }
                 ))}
               </select>
             </div>
+          </div>
+
+          {/* File Upload */}
+          <div className="border-t pt-4 mt-4">
+            <label className="block text-sm font-medium mb-2">📎 Attach File</label>
+            <input
+              type="file"
+              onChange={handleFileUpload}
+              disabled={uploadingFile}
+              className="w-full text-sm"
+            />
+            {uploadSuccess && <p className="text-green-600 text-sm mt-2">{uploadSuccess}</p>}
+            {uploadingFile && <p className="text-blue-600 text-sm mt-2">Uploading...</p>}
           </div>
 
           <div className="flex gap-3 pt-4">

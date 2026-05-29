@@ -8,6 +8,7 @@ import TicketActions from './TicketActions';
 import CommentBox from './CommentBox';
 import CommentItem from './CommentItem';
 import TicketHistory from './TicketHistory';
+import TicketAttachments from './TicketAttachments';
 
 const TYPE_ICON: Record<string, string> = { bug: '🐛', feature: '✨', improvement: '⚡', task: '📋', question: '❓' };
 const PRIORITY_ICON: Record<string, string> = { critical: '🔴', high: '🟠', medium: '🟡', low: '🟢' };
@@ -204,6 +205,12 @@ export default async function TicketDetailPage({ params }: { params: { id: strin
             <h3 className="font-bold text-gray-900 mb-4">📋 Action History</h3>
             <TicketHistory ticketId={ticket.id} />
           </div>*/}
+
+          {/* Attachments */}
+          <TicketAttachments 
+            ticketId={ticket.id} 
+            currentUserId={userId || ''}
+          />
 
           {/* Actions */}
           {canEdit && (
