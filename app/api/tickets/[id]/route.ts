@@ -39,10 +39,16 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
     }
 
-    // Convert empty strings to NULL for date fields
+    // Convert empty strings to NULL for date fields and UUID fields
     const dateFields = ['due_date', 'actual_end_date'];
+    const uuidFields = ['product_id', 'assignee_id'];
     const processedUpdates = { ...updates };
     dateFields.forEach(field => {
+      if (field in processedUpdates && processedUpdates[field] === '') {
+        processedUpdates[field] = null;
+      }
+    });
+    uuidFields.forEach(field => {
       if (field in processedUpdates && processedUpdates[field] === '') {
         processedUpdates[field] = null;
       }
