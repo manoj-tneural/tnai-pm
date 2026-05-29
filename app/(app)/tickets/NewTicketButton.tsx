@@ -17,15 +17,37 @@ export default function NewTicketButton({ products, engineers, userId, userRole 
     product_id: products[0]?.id ?? '', assignee_id: '', due_date: '',
   });
   const [loading, setLoading] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [uploadError, setUploadError] = useState('');
   const router = useRouter();
 
   function upd(k: string, v: string) { setForm(f => ({ ...f, [k]: v })); }
+
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const file = files[0];
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError('File size must be less than 10MB');
+      return;
+    }
+
+    setUploadedFiles([...uploadedFiles, file]);
+    setUploadError('');
+    e.target.value = '';
+  }
+
+  function removeFile(idx: number) {
+    setUploadedFiles(uploadedFiles.filter((_, i) => i !== idx));
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     try {
-      await createTicket({
+      const result = await createTicket({
         title: form.title,
         description: form.description || undefined,
         type: form.type,
@@ -35,9 +57,28 @@ export default function NewTicketButton({ products, engineers, userId, userRole 
         due_date: form.due_date || undefined,
         reporter_id: userId,
       });
+
+      // Upload files if any
+      if (uploadedFiles.length > 0 && result.ticketId) {
+        for (const file of uploadedFiles) {
+          const formData = new FormData();
+          formData.append('file', file);
+
+          try {
+            await fetch(`/api/tickets/${result.ticketId}/attachments`, {
+              method: 'POST',
+              body: formData,
+            });
+          } catch (err) {
+            console.error('Failed to upload file:', err);
+          }
+        }
+      }
+
       setLoading(false);
       setOpen(false);
       setForm(f => ({ ...f, title: '', description: '', assignee_id: '', due_date: '' }));
+      setUploadedFiles([]);
       router.refresh();
     } catch (error) {
       console.error('Failed to create ticket:', error);
@@ -103,6 +144,36 @@ export default function NewTicketButton({ products, engineers, userId, userRole 
                 <label className="label">Due Date</label>
                 <input type="date" className="input" value={form.due_date} onChange={e => upd('due_date', e.target.value)} />
               </div>
+
+              {/* File Upload Section */}
+              <div className="border-t pt-4">
+                <label className="label">📎 Attachments (Optional)</label>
+                <input
+                  type="file"
+                  onChange={handleFileSelect}
+                  disabled={uploadingFile}
+                  className="w-full text-sm"
+                />
+                {uploadError && <p className="text-red-600 text-sm mt-1">{uploadError}</p>}
+                
+                {uploadedFiles.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    {uploadedFiles.map((file, idx) => (
+                      <div key={idx} className="flex items-center justify-between bg-blue-50 p-2 rounded text-sm">
+                        <span className="text-blue-700">📄 {file.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeFile(idx)}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setOpen(false)} className="btn-secondary flex-1 justify-center">Cancel</button>
                 <button type="submit" className="btn-primary flex-1 justify-center" disabled={loading}>

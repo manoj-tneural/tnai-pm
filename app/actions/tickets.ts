@@ -55,7 +55,7 @@ export async function createTicket(data: {
       ]
     );
     revalidatePath('/tickets');
-    return { success: true, id: result.rows[0].id };
+    return { success: true, ticketId: result.rows[0].id };
   } catch (error) {
     console.error('Failed to create ticket:', error);
     throw error;

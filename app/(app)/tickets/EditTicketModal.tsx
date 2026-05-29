@@ -107,7 +107,7 @@ export default function EditTicketModal({ ticket, onClose, products, engineers }
         
         {error && <div className="bg-red-100 text-red-700 p-3 rounded mb-4 text-sm">{error}</div>}
         
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" style={{ overflow: 'scroll', maxHeight: '500px' }}>
           <div>
             <label className="block text-sm font-medium mb-1">Title</label>
             <input
