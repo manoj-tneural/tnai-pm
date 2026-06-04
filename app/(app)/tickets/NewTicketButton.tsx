@@ -14,7 +14,7 @@ export default function NewTicketButton({ products, engineers, userId, userRole 
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
     title: '', description: '', type: 'bug', priority: 'medium',
-    product_id: products[0]?.id ?? '', assignee_id: '', due_date: '',
+    product_id: products[0]?.id ?? '', assignee_id: userId, due_date: '',
   });
   const [loading, setLoading] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
@@ -77,7 +77,7 @@ export default function NewTicketButton({ products, engineers, userId, userRole 
 
       setLoading(false);
       setOpen(false);
-      setForm(f => ({ ...f, title: '', description: '', assignee_id: '', due_date: '' }));
+      setForm(f => ({ ...f, title: '', description: '', assignee_id: userId, due_date: '' }));
       setUploadedFiles([]);
       router.refresh();
     } catch (error) {
