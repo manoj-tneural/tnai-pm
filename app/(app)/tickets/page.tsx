@@ -22,6 +22,20 @@ export default async function TicketsPage({
   const token = cookieStore.get('auth_token')?.value;
   if (!token) return <div className="p-8 text-red-600">Authentication required</div>;
 
+  // Extract logged-in user ID from JWT token
+  let loggedInUserId: string | null = null;
+  try {
+    const parts = token.split('.');
+    if (parts.length === 3) {
+      const decoded = JSON.parse(
+        Buffer.from(parts[1], 'base64').toString('utf-8')
+      );
+      loggedInUserId = decoded.userId || decoded.sub;
+    }
+  } catch (e) {
+    console.error('Token decode error:', e);
+  }
+
   try {
     let ticketQuery = `
       SELECT tickets.*, products.name as product_name, products.icon, products.slug,
@@ -59,14 +73,14 @@ export default async function TicketsPage({
       query(ticketQuery, params),
       query('SELECT id, name, icon, slug FROM products'),
       query(`SELECT id, full_name, role FROM profiles WHERE role IN ($1, $2)`, ['engineer', 'project_manager']),
-      query('SELECT * FROM profiles LIMIT 1'), // Get current user profile
+      loggedInUserId ? query('SELECT * FROM profiles WHERE id = $1', [loggedInUserId]) : { rows: [] },
     ]);
 
     const tickets: Array<any> = ticketsResult.rows;
     const products: Array<any> = productsResult.rows;
     const engineers: Array<any> = engineersResult.rows;
     const profile: any = profileResult.rows[0];
-    const userId = profile?.id;
+    const userId = loggedInUserId || profile?.id;
 
     const counts = {
       all: tickets?.length ?? 0,
