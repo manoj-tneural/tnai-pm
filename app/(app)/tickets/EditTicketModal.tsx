@@ -136,11 +136,14 @@ export default function EditTicketModal({ ticket, onClose, products, engineers }
                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                 className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option>bug</option>
-                <option>feature</option>
-                <option>improvement</option>
-                <option>task</option>
-                <option>question</option>
+                <option value="bug">🐛 Bug</option>
+                <option value="change_request">📝 Change Request</option>
+                <option value="feature_enhancement">✨ Feature Enhancement</option>
+                <option value="incident">🚨 Incident</option>
+                <option value="service_request">🔧 Service Request</option>
+                <option value="task">📋 Task</option>
+                <option value="new_feature_request">🎯 New Feature Request</option>
+                <option value="problem">⚠️ Problem</option>
               </select>
             </div>
             <div>

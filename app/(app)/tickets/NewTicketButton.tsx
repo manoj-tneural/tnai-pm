@@ -109,10 +109,13 @@ export default function NewTicketButton({ products, engineers, userId, userRole 
                   <label className="label">Type</label>
                   <select className="select" value={form.type} onChange={e => upd('type', e.target.value)}>
                     <option value="bug">🐛 Bug</option>
-                    <option value="feature">✨ Feature Request</option>
-                    <option value="improvement">⚡ Improvement</option>
+                    <option value="change_request">📝 Change Request</option>
+                    <option value="feature_enhancement">✨ Feature Enhancement</option>
+                    <option value="incident">🚨 Incident</option>
+                    <option value="service_request">🔧 Service Request</option>
                     <option value="task">📋 Task</option>
-                    <option value="question">❓ Question</option>
+                    <option value="new_feature_request">🎯 New Feature Request</option>
+                    <option value="problem">⚠️ Problem</option>
                   </select>
                 </div>
                 <div>
