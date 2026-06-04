@@ -15,6 +15,7 @@ export default function NewTicketButton({ products, engineers, userId, userRole 
   const [form, setForm] = useState({
     title: '', description: '', type: 'bug', priority: 'medium',
     product_id: products[0]?.id ?? '', assignee_id: '', due_date: '',
+    ticket_source: 'internal', customer_name: '',
   });
   const [loading, setLoading] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
@@ -56,6 +57,8 @@ export default function NewTicketButton({ products, engineers, userId, userRole 
         assignee_id: form.assignee_id || undefined,
         due_date: form.due_date || undefined,
         reporter_id: userId,
+        ticket_source: form.ticket_source,
+        customer_name: form.ticket_source === 'external' ? form.customer_name : undefined,
       });
 
       // Upload files if any
@@ -77,7 +80,7 @@ export default function NewTicketButton({ products, engineers, userId, userRole 
 
       setLoading(false);
       setOpen(false);
-      setForm(f => ({ ...f, title: '', description: '', assignee_id: '', due_date: '' }));
+      setForm(f => ({ ...f, title: '', description: '', assignee_id: '', due_date: '', customer_name: '', ticket_source: 'internal' }));
       setUploadedFiles([]);
       router.refresh();
     } catch (error) {
@@ -147,6 +150,22 @@ export default function NewTicketButton({ products, engineers, userId, userRole 
                 <label className="label">Due Date</label>
                 <input type="date" className="input" value={form.due_date} onChange={e => upd('due_date', e.target.value)} />
               </div>
+              
+              <div>
+                <label className="label">Ticket Type</label>
+                <select className="select" value={form.ticket_source} onChange={e => upd('ticket_source', e.target.value)}>
+                  <option value="internal">🏢 Internal</option>
+                  <option value="external">👥 External</option>
+                </select>
+              </div>
+              
+              {form.ticket_source === 'external' && (
+                <div>
+                  <label className="label">Customer Name *</label>
+                  <input className="input" required placeholder="Enter customer name" value={form.customer_name}
+                    onChange={e => upd('customer_name', e.target.value)} />
+                </div>
+              )}
 
               {/* File Upload Section */}
               <div className="border-t pt-4">

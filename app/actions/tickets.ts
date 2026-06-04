@@ -33,6 +33,8 @@ export async function createTicket(data: {
   assignee_id?: string;
   due_date?: string;
   reporter_id: string;
+  ticket_source: string;
+  customer_name?: string;
 }) {
   const cookieStore = await cookies();
   const token = cookieStore.get('auth_token')?.value;
@@ -40,8 +42,8 @@ export async function createTicket(data: {
 
   try {
     const result = await query(
-      `INSERT INTO tickets (title, description, type, priority, product_id, assignee_id, due_date, reporter_id, status, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'open', NOW(), NOW())
+      `INSERT INTO tickets (title, description, type, priority, product_id, assignee_id, due_date, reporter_id, ticket_source, customer_name, status, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'open', NOW(), NOW())
        RETURNING id`,
       [
         data.title,
@@ -52,6 +54,8 @@ export async function createTicket(data: {
         data.assignee_id || null,
         data.due_date || null,
         data.reporter_id,
+        data.ticket_source,
+        data.customer_name || null,
       ]
     );
     revalidatePath('/tickets');

@@ -43,11 +43,13 @@ export default async function TicketDetailPage({ params }: { params: { id: strin
     const [ticketResult, commentsResult, engineersResult, profileResult, productsResult] = await Promise.all([
       query(`SELECT t.*, p.name as product_name, p.icon, p.slug, p.color,
                     r.full_name as reporter_full_name, r.role as reporter_role,
-                    a.full_name as assignee_full_name, a.role as assignee_role
+                    a.full_name as assignee_full_name, a.role as assignee_role,
+                    tb.full_name as tested_by_full_name, tb.role as tested_by_role
              FROM tickets t
              LEFT JOIN products p ON t.product_id = p.id
              LEFT JOIN profiles r ON t.reporter_id = r.id
              LEFT JOIN profiles a ON t.assignee_id = a.id
+             LEFT JOIN profiles tb ON t.tested_by = tb.id
              WHERE t.id = $1`, [params.id]),
       query(`SELECT c.*, p.full_name, p.role
              FROM ticket_comments c
@@ -84,6 +86,10 @@ export default async function TicketDetailPage({ params }: { params: { id: strin
       assignee: {
         full_name: ticketData.assignee_full_name,
         role: ticketData.assignee_role,
+      },
+      tested_by: {
+        full_name: ticketData.tested_by_full_name,
+        role: ticketData.tested_by_role,
       },
     };
 
@@ -184,6 +190,28 @@ export default async function TicketDetailPage({ params }: { params: { id: strin
                 <dt className="text-gray-500 text-xs font-semibold uppercase tracking-wide mb-1">Assignee</dt>
                 <dd>{ticket.assignee?.full_name ?? <span className="text-gray-400">Unassigned</span>}</dd>
               </div>
+              <div>
+                <dt className="text-gray-500 text-xs font-semibold uppercase tracking-wide mb-1">Ticket Type</dt>
+                <dd>{ticket.ticket_source === 'external' ? '👥 External' : '🏢 Internal'}</dd>
+              </div>
+              {ticket.ticket_source === 'external' && ticket.customer_name && (
+                <div>
+                  <dt className="text-gray-500 text-xs font-semibold uppercase tracking-wide mb-1">Customer</dt>
+                  <dd>{ticket.customer_name}</dd>
+                </div>
+              )}
+              <div>
+                <dt className="text-gray-500 text-xs font-semibold uppercase tracking-wide mb-1">Tested By</dt>
+                <dd>{ticket.tested_by?.full_name ?? <span className="text-gray-400">Not Tested</span>}</dd>
+              </div>
+              {ticket.tested_date && (
+                <div>
+                  <dt className="text-gray-500 text-xs font-semibold uppercase tracking-wide mb-1">Testing Date</dt>
+                  <dd className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium inline-block">
+                    ✓ {formatDate(ticket.tested_date)}
+                  </dd>
+                </div>
+              )}
               {ticket.due_date && (
                 <div>
                   <dt className="text-gray-500 text-xs font-semibold uppercase tracking-wide mb-1">Due Date</dt>

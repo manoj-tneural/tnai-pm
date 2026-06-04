@@ -40,8 +40,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     }
 
     // Convert empty strings to NULL for date fields and UUID fields
-    const dateFields = ['due_date', 'actual_end_date'];
-    const uuidFields = ['product_id', 'assignee_id'];
+    const dateFields = ['due_date', 'actual_end_date', 'tested_date'];
+    const uuidFields = ['product_id', 'assignee_id', 'tested_by'];
     const processedUpdates = { ...updates };
     dateFields.forEach(field => {
       if (field in processedUpdates && processedUpdates[field] === '') {

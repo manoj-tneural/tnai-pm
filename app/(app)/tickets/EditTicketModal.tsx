@@ -27,6 +27,10 @@ export default function EditTicketModal({ ticket, onClose, products, engineers }
     due_date: formatDateForInput(ticket.due_date),
     actual_end_date: formatDateForInput(ticket.actual_end_date),
     status: ticket.status || 'open',
+    ticket_source: ticket.ticket_source || 'internal',
+    customer_name: ticket.customer_name || '',
+    tested_by: ticket.tested_by || '',
+    tested_date: formatDateForInput(ticket.tested_date),
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -223,6 +227,56 @@ export default function EditTicketModal({ ticket, onClose, products, engineers }
                 ))}
               </select>
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium mb-1">Ticket Type</label>
+              <select
+                value={formData.ticket_source}
+                onChange={(e) => setFormData({ ...formData, ticket_source: e.target.value })}
+                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="internal">🏢 Internal</option>
+                <option value="external">👥 External</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Tested By</label>
+              <select
+                value={formData.tested_by}
+                onChange={(e) => setFormData({ ...formData, tested_by: e.target.value })}
+                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Not Tested</option>
+                {engineers.map(e => (
+                  <option key={e.id} value={e.id}>{e.full_name} ({e.role})</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {formData.ticket_source === 'external' && (
+            <div>
+              <label className="block text-sm font-medium mb-1">Customer Name</label>
+              <input
+                type="text"
+                value={formData.customer_name}
+                onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
+                placeholder="Enter customer name"
+                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Testing Date</label>
+            <input
+              type="date"
+              value={formData.tested_date}
+              onChange={(e) => setFormData({ ...formData, tested_date: e.target.value })}
+              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
 
           {/* File Upload */}
