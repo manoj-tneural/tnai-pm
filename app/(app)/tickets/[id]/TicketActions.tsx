@@ -12,7 +12,7 @@ interface Props {
   products: { id: string; name: string; icon: string }[];
 }
 
-const STATUSES = ['open', 'in_progress', 'in_review', 'resolved', 'closed'];
+const STATUSES = ['open', 'in_progress', 'in_review', 'on_hold', 'resolved', 'closed'];
 
 export default function TicketActions({ ticket, currentStatus, currentAssignee, engineers, products }: Props) {
   const [status, setStatus] = useState(currentStatus);
