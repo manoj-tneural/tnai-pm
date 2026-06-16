@@ -14,6 +14,15 @@ function formatDate(date: any): string {
   return new Date(date).toISOString().split('T')[0];
 }
 
+function calculateDaysAgo(date: any): number {
+  if (!date) return 0;
+  const startDate = typeof date === 'string' ? new Date(date) : new Date(date);
+  const today = new Date();
+  const diffTime = today.getTime() - startDate.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays;
+}
+
 export default function DeploymentCard({ deployment, productSlug }: { deployment: any; productSlug: string }) {
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -44,7 +53,12 @@ export default function DeploymentCard({ deployment, productSlug }: { deployment
         <div className="flex items-start justify-between mb-3">
           <Link href={`/products/${productSlug}/deployments/${deployment.id}`} className="flex-1">
             <div className="font-bold text-gray-900 text-lg group-hover:text-blue-600 transition">{deployment.customer_name}</div>
-            {deployment.day0_date && <div className="text-xs text-gray-400 mt-0.5">Started: {formatDate(deployment.day0_date)}</div>}
+            {deployment.day0_date && (
+              <div>
+                <div className="text-xs text-gray-400 mt-0.5">Started: {formatDate(deployment.day0_date)}</div>
+                <div className="text-xs text-gray-400 mt-0.5">Age: {calculateDaysAgo(deployment.day0_date)} days</div>
+              </div>
+            )}
           </Link>
           <div className="flex items-center gap-2">
             <span className={clsx('badge', STATUS_COLORS.deployment[deployment.status as keyof typeof STATUS_COLORS.deployment])}>
