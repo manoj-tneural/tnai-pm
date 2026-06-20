@@ -89,7 +89,7 @@ export default function DevTaskItemRow({ item, engineers, onDelete, onUpdate }: 
           item={item}
           engineers={engineers}
           onClose={() => setEditing(false)}
-          onSuccess={onUpdate}
+          onSuccess={() => onUpdate(item)}
         />
       )}
     </tr>
