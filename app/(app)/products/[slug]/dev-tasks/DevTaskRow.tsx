@@ -1,8 +1,9 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
 import EditDevTaskModal from './EditDevTaskModal';
+import DevTaskItemsDisplay from './DevTaskItemsDisplay';
 
 const STATUS_CLS: Record<string, string> = {
   done: 'bg-green-100 text-green-700',
@@ -46,7 +47,27 @@ function getRowColor(endDate: any, status: string): string {
 export default function DevTaskRow({ task, engineers }: { task: any; engineers: { id: string; full_name: string | null; role: string }[] }) {
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [items, setItems] = useState<any[]>([]);
+  const [itemsLoading, setItemsLoading] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    loadItems();
+  }, []);
+
+  async function loadItems() {
+    try {
+      setItemsLoading(true);
+      const response = await fetch(`/api/dev-task-items?task_id=${task.id}`);
+      if (!response.ok) throw new Error('Failed to load items');
+      const { items: loadedItems } = await response.json();
+      setItems(loadedItems);
+    } catch (err) {
+      console.error('Error loading items:', err);
+    } finally {
+      setItemsLoading(false);
+    }
+  }
 
   async function handleDelete() {
     if (!confirm('Delete this task?')) return;
@@ -119,6 +140,13 @@ export default function DevTaskRow({ task, engineers }: { task: any; engineers: 
           </button>
         </td>
       </tr>
+      {!itemsLoading && items.length > 0 && (
+        <tr>
+          <td colSpan={9} className="px-0 py-0">
+            <DevTaskItemsDisplay taskId={task.id} items={items} engineers={engineers} onItemsChange={loadItems} />
+          </td>
+        </tr>
+      )}
       {editing && <EditDevTaskModal task={task} onClose={() => setEditing(false)} engineers={engineers} />}
     </>
   );
