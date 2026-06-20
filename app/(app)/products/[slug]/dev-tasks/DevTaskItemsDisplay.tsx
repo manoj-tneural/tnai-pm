@@ -8,10 +8,11 @@ interface DevTaskItemsDisplayProps {
   items: any[];
   engineers: { id: string; full_name: string | null; role: string }[];
   onItemsChange: () => void;
+  initialOpen?: boolean;
 }
 
-export default function DevTaskItemsDisplay({ taskId, items, engineers, onItemsChange }: DevTaskItemsDisplayProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export default function DevTaskItemsDisplay({ taskId, items, engineers, onItemsChange, initialOpen = false }: DevTaskItemsDisplayProps) {
+  const [isOpen, setIsOpen] = useState(initialOpen);
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [formData, setFormData] = useState({
     title: '',

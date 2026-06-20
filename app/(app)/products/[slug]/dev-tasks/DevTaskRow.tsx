@@ -49,6 +49,7 @@ export default function DevTaskRow({ task, engineers }: { task: any; engineers: 
   const [deleting, setDeleting] = useState(false);
   const [items, setItems] = useState<any[]>([]);
   const [itemsLoading, setItemsLoading] = useState(false);
+  const [showItemsPanel, setShowItemsPanel] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -124,6 +125,16 @@ export default function DevTaskRow({ task, engineers }: { task: any; engineers: 
         </td>
         <td className="px-4 py-3 flex gap-2">
           <button
+            onClick={() => {
+              setShowItemsPanel(!showItemsPanel);
+              if (!showItemsPanel) loadItems();
+            }}
+            className="text-sm px-2 py-1 text-green-600 hover:bg-green-50 rounded transition"
+            title="Add/View Items"
+          >
+            ➕
+          </button>
+          <button
             onClick={() => setEditing(true)}
             className="text-sm px-2 py-1 text-blue-600 hover:bg-blue-50 rounded transition"
             title="Edit"
@@ -140,10 +151,17 @@ export default function DevTaskRow({ task, engineers }: { task: any; engineers: 
           </button>
         </td>
       </tr>
-      {!itemsLoading && items.length > 0 && (
+      {showItemsPanel && !itemsLoading && (
         <tr>
           <td colSpan={9} className="px-0 py-0">
-            <DevTaskItemsDisplay taskId={task.id} items={items} engineers={engineers} onItemsChange={loadItems} />
+            <DevTaskItemsDisplay taskId={task.id} items={items} engineers={engineers} onItemsChange={loadItems} initialOpen={true} />
+          </td>
+        </tr>
+      )}
+      {!itemsLoading && items.length > 0 && !showItemsPanel && (
+        <tr>
+          <td colSpan={9} className="px-0 py-0">
+            <DevTaskItemsDisplay taskId={task.id} items={items} engineers={engineers} onItemsChange={loadItems} initialOpen={false} />
           </td>
         </tr>
       )}
