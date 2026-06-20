@@ -15,6 +15,15 @@ function formatDate(date: any): string {
   return new Date(date).toISOString().split('T')[0];
 }
 
+function calculateDaysAgo(date: any): number {
+  if (!date) return 0;
+  const startDate = typeof date === 'string' ? new Date(date) : new Date(date);
+  const today = new Date();
+  const diffTime = today.getTime() - startDate.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays;
+}
+
 interface TicketRowProps {
   ticket: any;
   products: { id: string; name: string; icon: string }[];
@@ -54,6 +63,7 @@ export default function TicketRow({ ticket, products, engineers }: TicketRowProp
             {TYPE_ICON[ticket.type]} {ticket.title}
           </Link>
           {ticket.description && <div className="text-gray-400 text-xs mt-0.5 line-clamp-1">{ticket.description}</div>}
+          {ticket.created_at && <div className="text-gray-400 text-xs mt-0.5">Age: {calculateDaysAgo(ticket.created_at)} days</div>}
         </td>
         <td className="px-4 py-3">
           <span className={clsx('badge', STATUS_COLORS.priority[ticket.priority as keyof typeof STATUS_COLORS.priority])}>
