@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
-import { writeFile } from 'fs/promises';
+import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { randomBytes } from 'crypto';
 
@@ -24,11 +24,11 @@ export async function POST(request: NextRequest) {
 
     // Create uploads directory if it doesn't exist
     try {
+      await mkdir(uploadDir, { recursive: true });
       await writeFile(filePath, Buffer.from(await file.arrayBuffer()));
     } catch (err) {
       console.error('File write error:', err);
-      // If file write fails, still create the DB record but mark it
-      return NextResponse.json({ warning: 'File upload failed', attachment: null }, { status: 200 });
+      return NextResponse.json({ error: 'File upload failed', details: err instanceof Error ? err.message : 'Unknown error' }, { status: 500 });
     }
 
     const fileUrl = `/uploads/dev-task-items/${fileName}`;

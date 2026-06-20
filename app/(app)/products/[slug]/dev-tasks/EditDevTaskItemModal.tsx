@@ -100,17 +100,28 @@ export default function EditDevTaskItemModal({ item, engineers, onClose, onSucce
         formDataFile.append('file', newFile);
         formDataFile.append('item_id', item.id);
 
-        const uploadResponse = await fetch('/api/dev-task-item-attachments', {
-          method: 'POST',
-          body: formDataFile,
-        });
+        try {
+          const uploadResponse = await fetch('/api/dev-task-item-attachments', {
+            method: 'POST',
+            body: formDataFile,
+          });
 
-        if (uploadResponse.ok) {
-          const { attachment } = await uploadResponse.json();
-          setAttachments([...attachments, attachment]);
-          setNewFile(null);
-        } else {
-          console.warn('File upload failed, but item was updated');
+          if (uploadResponse.ok) {
+            const { attachment } = await uploadResponse.json();
+            if (attachment) {
+              setAttachments([attachment, ...attachments]);
+              setNewFile(null);
+            }
+          } else {
+            const errorData = await uploadResponse.json();
+            console.error('File upload error:', errorData);
+            setError(`File upload failed: ${errorData.error}`);
+            return;
+          }
+        } catch (uploadErr) {
+          console.error('Upload request error:', uploadErr);
+          setError('File upload request failed');
+          return;
         }
       }
 

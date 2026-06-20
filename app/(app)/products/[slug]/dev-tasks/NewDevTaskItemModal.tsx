@@ -61,13 +61,22 @@ export default function NewDevTaskItemModal({ taskId, engineers, onClose, onSucc
         formDataFile.append('file', file);
         formDataFile.append('item_id', item.id);
 
-        const uploadResponse = await fetch('/api/dev-task-item-attachments', {
-          method: 'POST',
-          body: formDataFile,
-        });
+        try {
+          const uploadResponse = await fetch('/api/dev-task-item-attachments', {
+            method: 'POST',
+            body: formDataFile,
+          });
 
-        if (!uploadResponse.ok) {
-          console.warn('File upload failed, but item was created');
+          if (!uploadResponse.ok) {
+            const errorData = await uploadResponse.json();
+            console.error('File upload error:', errorData);
+            setError(`File upload failed: ${errorData.error}`);
+            return;
+          }
+        } catch (uploadErr) {
+          console.error('Upload request error:', uploadErr);
+          setError('File upload request failed');
+          return;
         }
       }
 
