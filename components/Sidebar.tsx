@@ -13,6 +13,7 @@ const NAV = [
   { href: '/dashboard', label: 'Home', icon: '🏠' },
   { href: '/tickets',   label: 'Tickets',   icon: '🎫' },
   { href: '/daily',     label: 'Daily Logs', icon: '📋' },
+  { href: '/leaves',    label: 'Leaves',    icon: '🏖️' },
 ];
 
 export default function Sidebar({ profile, products }: Props) {
