@@ -18,6 +18,7 @@ export default function NewDevTaskItemModal({ taskId, engineers, onClose, onSucc
     dev_hours: '',
     status: 'todo',
     assignee_id: '',
+    notes: '',
   });
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -49,6 +50,7 @@ export default function NewDevTaskItemModal({ taskId, engineers, onClose, onSucc
           dev_hours: formData.dev_hours ? parseFloat(formData.dev_hours) : null,
           status: formData.status,
           assignee_id: formData.assignee_id || null,
+          notes: formData.notes || null,
         }),
       });
 
@@ -214,6 +216,20 @@ export default function NewDevTaskItemModal({ taskId, engineers, onClose, onSucc
                 <option key={e.id} value={e.id}>{e.full_name}</option>
               ))}
             </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
+              Notes (Updates & Progress)
+            </label>
+            <textarea
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Keep team updated on progress, blockers, or any changes..."
+              rows={3}
+              disabled={loading}
+            />
           </div>
 
           <div>

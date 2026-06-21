@@ -25,6 +25,7 @@ export default function EditDevTaskItemModal({ item, engineers, onClose, onSucce
     dev_hours: item.dev_hours,
     status: item.status,
     assignee_id: item.assignee_id,
+    notes: item.notes,
   });
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [newFile, setNewFile] = useState<File | null>(null);
@@ -89,6 +90,7 @@ export default function EditDevTaskItemModal({ item, engineers, onClose, onSucce
           dev_hours: formData.dev_hours ? parseFloat(formData.dev_hours) : null,
           status: formData.status,
           assignee_id: formData.assignee_id || null,
+          notes: formData.notes || null,
         }),
       });
 
@@ -259,6 +261,20 @@ export default function EditDevTaskItemModal({ item, engineers, onClose, onSucce
                 <option key={e.id} value={e.id}>{e.full_name}</option>
               ))}
             </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
+              Notes (Updates & Progress)
+            </label>
+            <textarea
+              value={formData.notes || ''}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Keep team updated on progress, blockers, or any changes..."
+              rows={4}
+              disabled={loading}
+            />
           </div>
 
           {/* Attachments Section */}

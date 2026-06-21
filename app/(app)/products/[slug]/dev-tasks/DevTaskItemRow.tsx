@@ -29,6 +29,7 @@ interface DevTaskItemRowProps {
 export default function DevTaskItemRow({ item, engineers, onDelete, onUpdate }: DevTaskItemRowProps) {
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
   const router = useRouter();
 
   async function handleDelete() {
@@ -56,6 +57,19 @@ export default function DevTaskItemRow({ item, engineers, onDelete, onUpdate }: 
         <div className="ml-8">
           <div className="font-medium text-gray-800">{item.title}</div>
           {item.description && <div className="text-xs text-gray-500 mt-0.5 line-clamp-1">{item.description}</div>}
+          {item.notes && (
+            <button
+              onClick={() => setShowNotes(!showNotes)}
+              className="text-xs text-blue-600 hover:text-blue-700 mt-1 font-semibold"
+            >
+              {showNotes ? '▼' : '▶'} Notes ({item.notes.split('\n').length})
+            </button>
+          )}
+          {showNotes && item.notes && (
+            <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-gray-700 whitespace-pre-wrap">
+              {item.notes}
+            </div>
+          )}
         </div>
       </td>
       <td className="px-4 py-2">
